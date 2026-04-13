@@ -1,0 +1,26 @@
+import { useQuery } from "@tanstack/react-query";
+import { getStationHistory, listStations } from "@/api/stations";
+import type { StationHistoryPoint, StationWithReading } from "@/types";
+
+export type { StationHistoryPoint, StationWithReading };
+
+export function useStations() {
+  return useQuery({
+    queryKey: ["stations-with-readings"],
+    queryFn: (): Promise<StationWithReading[]> => listStations(),
+    refetchInterval: 5 * 60 * 1000,
+  });
+}
+
+export function useStationHistory(stationId: string | undefined, hours = 24) {
+  return useQuery({
+    queryKey: ["station-history", stationId, hours],
+    queryFn: (): Promise<StationHistoryPoint[]> => {
+      if (!stationId) {
+        return Promise.resolve([]);
+      }
+      return getStationHistory(stationId, hours);
+    },
+    enabled: Boolean(stationId),
+  });
+}
