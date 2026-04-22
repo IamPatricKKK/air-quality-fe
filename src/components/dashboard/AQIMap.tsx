@@ -1,15 +1,17 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap, GeoJSON, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, GeoJSON, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import 'leaflet.heat';
 import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
-import { getAqiColor, getAqiLabel } from '@/lib/aqi';
+import { getAqiColor, getAqiLabel, getAqiCategory } from '@/lib/aqi';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { Layers, Radio, Flame } from 'lucide-react';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { Layer, PathOptions } from 'leaflet';
+import { createAqiPinIcon } from './AQIPin';
+import { AQILegend } from './AQILegend';
 
 
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
@@ -405,7 +407,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
           </button>
         </div>
       </div>
-      <div className="h-[calc(100%-52px)]">
+      <div className="h-[calc(100%-52px)] relative">
         <MapContainer
           center={[16.0, 106.0]}
           zoom={6}
@@ -421,37 +423,56 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
 
           {viewMode === 'heatmap' && <HeatmapLayer stations={mappableStations} />}
 
-          {viewMode === 'stations' && mappableStations.map((station) => (
-            <CircleMarker
-              key={station.id}
-              center={[station.lat, station.lng]}
-              radius={station.id === selectedStation?.id ? 14 : 10}
-              pathOptions={{
-                fillColor: getMarkerColor(station.aqi),
-                fillOpacity: 0.8,
-                color: station.id === selectedStation?.id ? '#fff' : getMarkerColor(station.aqi),
-                weight: station.id === selectedStation?.id ? 3 : 1.5,
-                opacity: 0.9,
-              }}
-              eventHandlers={{
-                click: () => onSelectStation(station),
-              }}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-bold">{station.name}</p>
-                  <p className="text-xs opacity-75">{station.region}</p>
-                  <p className="mt-1">
-                    <span className="font-bold" style={{ color: getMarkerColor(station.aqi) }}>
-                      AQI: {station.aqi}
-                    </span>
-                    {' '}- {getAqiLabel(station.aqi)}
-                  </p>
-                  <p className="text-xs mt-1">PM2.5: {station.pm25} µg/m³</p>
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))}
+          {viewMode === 'stations' && mappableStations.map((station) => {
+            const isSelected = station.id === selectedStation?.id;
+            const category = getAqiCategory(station.aqi);
+            return (
+              <Marker
+                key={station.id}
+                position={[station.lat, station.lng]}
+                icon={createAqiPinIcon(station.aqi, isSelected)}
+                eventHandlers={{
+                  click: () => onSelectStation(station),
+                }}
+              >
+                <Popup>
+                  <div className="text-sm min-w-[180px]">
+                    <p className="font-bold text-[13px] leading-tight">{station.name}</p>
+                    <p className="text-[11px] opacity-70 mt-0.5">{station.region}</p>
+                    <div
+                      className="mt-2 rounded-md px-2 py-1.5"
+                      style={{
+                        backgroundColor: category.color,
+                        color: category.textColor,
+                      }}
+                    >
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl font-black tabular-nums leading-none">
+                          {station.aqi}
+                        </span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide">
+                          AQI US
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-medium mt-0.5">{category.label}</p>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-1 text-[11px]">
+                      <div>
+                        <span className="opacity-60">PM2.5</span>
+                        <br />
+                        <span className="font-medium">{station.pm25 ?? '—'} µg/m³</span>
+                      </div>
+                      <div>
+                        <span className="opacity-60">PM10</span>
+                        <br />
+                        <span className="font-medium">{(station as any).pm10 ?? '—'} µg/m³</span>
+                      </div>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
 
           {viewMode === 'regions' && geoData && (
             <GeoJSON
@@ -487,6 +508,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
             </CircleMarker>
           ))}
         </MapContainer>
+        <AQILegend />
       </div>
     </motion.div>
   );
