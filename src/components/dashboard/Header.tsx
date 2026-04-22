@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useUnreadCount } from '@/hooks/useAlerts';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useState, useRef, useEffect } from 'react';
 
@@ -28,9 +29,10 @@ interface HeaderProps {
 export function Header({ onToggleAlerts, alertsOpen, selectedRegion = '', onRegionChange }: HeaderProps) {
   const { user, signOut } = useAuth();
   const { data: notifications } = useNotifications();
+  const { data: unreadData } = useUnreadCount();
   const { data: isAdmin } = useIsAdmin();
   const navigate = useNavigate();
-  const unreadCount = notifications?.filter(n => !n.is_read).length ?? 0;
+  const unreadCount = unreadData?.count ?? notifications?.filter(n => !n.is_read).length ?? 0;
   const [regionOpen, setRegionOpen] = useState(false);
   const regionRef = useRef<HTMLDivElement>(null);
 

@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 import { Station } from '@/data/mockData';
 import { useStationHistory } from '@/hooks/useStations';
+import { aqiReferenceLines } from '@/lib/aqi';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 
@@ -77,6 +78,16 @@ export function AQIChart({ station }: AQIChartProps) {
                   color: 'hsl(210 20% 92%)',
                 }}
               />
+              {aqiReferenceLines().map((r) => (
+                <ReferenceLine
+                  key={r.y}
+                  y={r.y}
+                  stroke={r.color}
+                  strokeDasharray="2 4"
+                  strokeOpacity={0.45}
+                  label={{ value: r.label, position: 'right', fontSize: 9, fill: r.color }}
+                />
+              ))}
               <Area
                 type="monotone"
                 dataKey="aqi"

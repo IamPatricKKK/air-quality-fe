@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Station, getAQILevel, getAQILabel, getAQIColorClass, getAQIBgClass } from '@/data/mockData';
+import { getAqiCategory } from '@/lib/aqi';
 import { TrendingUp, TrendingDown, Minus, ArrowUpDown, ArrowUp, ArrowDown, Search, Filter } from 'lucide-react';
 
 interface RegionTableProps {
@@ -131,20 +133,28 @@ export function RegionTable({ stations = [] }: RegionTableProps) {
               const level = getAQILevel(station.aqi);
               const colorClass = getAQIColorClass(level);
               const bgClass = getAQIBgClass(level);
+              const epa = getAqiCategory(station.aqi);
               const trend = i % 3 === 0 ? 'up' : i % 3 === 1 ? 'down' : 'stable';
 
               return (
                 <tr key={station.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">
                   <td className="px-4 py-2.5 text-muted-foreground font-medium">{i + 1}</td>
-                  <td className="px-4 py-2.5 font-medium text-foreground max-w-[200px] truncate">{station.name}</td>
+                  <td className="px-4 py-2.5 font-medium text-foreground max-w-[200px] truncate">
+                    <Link to={`/stations/${station.id}`} className="hover:text-primary hover:underline">
+                      {station.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-2.5 text-muted-foreground">{station.region}</td>
                   <td className="px-4 py-2.5 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-md ${bgClass}/20 ${colorClass} font-bold`}>
+                    <span
+                      className="inline-flex px-2 py-0.5 rounded-md font-bold"
+                      style={{ backgroundColor: epa.color, color: epa.textColor }}
+                    >
                       {station.aqi}
                     </span>
                   </td>
-                  <td className={`px-4 py-2.5 ${colorClass} font-medium`}>
-                    {getAQILabel(level)}
+                  <td className="px-4 py-2.5 font-medium" style={{ color: epa.color }}>
+                    {epa.label}
                   </td>
                   <td className="px-4 py-2.5 text-center text-foreground">{station.pm25}</td>
                   <td className="px-4 py-2.5 text-center text-foreground hidden md:table-cell">{station.temperature}°C</td>

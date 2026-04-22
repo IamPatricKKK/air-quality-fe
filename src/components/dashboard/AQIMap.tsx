@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap, GeoJSON, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import 'leaflet.heat';
 import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
+import { getAqiColor, getAqiLabel } from '@/lib/aqi';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { Layers, Radio, Flame } from 'lucide-react';
@@ -17,25 +18,11 @@ const REGION_FILL_OPACITY = 0.1;
 const REGION_EMPTY_OPACITY = 0.04;
 
 function getMarkerColor(aqi: number): string {
-  const level = getAQILevel(aqi);
-  const colors: Record<string, string> = {
-    'good': '#22c55e',
-    'moderate': '#eab308',
-    'unhealthy-sensitive': '#f97316',
-    'unhealthy': '#ef4444',
-    'very-unhealthy': '#8b5cf6',
-    'hazardous': '#991b1b',
-  };
-  return colors[level];
+  return getAqiColor(aqi);
 }
 
 function getAQIColorForRegion(aqi: number): string {
-  if (aqi <= 50) return '#22c55e';
-  if (aqi <= 100) return '#eab308';
-  if (aqi <= 150) return '#f97316';
-  if (aqi <= 200) return '#ef4444';
-  if (aqi <= 300) return '#8b5cf6';
-  return '#991b1b';
+  return getAqiColor(aqi);
 }
 
 type Ring = number[][];
@@ -104,13 +91,41 @@ function normalizeRegionGeoJSON(fc: FeatureCollection): FeatureCollection {
   };
 }
 
-function FlyToStation({ station }: { station: Station | null }) {
+function FlyToStation({ station, stations }: { station: Station | null; stations: Station[] }) {
   const map = useMap();
+  const hasInitializedView = useRef(false);
+  const lastStationId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (station) {
-      map.flyTo([station.lat, station.lng], 12, { duration: 1.5 });
+    if (!stations.length) return;
+
+    if (!hasInitializedView.current) {
+      hasInitializedView.current = true;
+      lastStationId.current = station?.id ?? null;
+
+      if (stations.length === 1) {
+        map.setView([stations[0].lat, stations[0].lng], 8, { animate: false });
+        return;
+      }
+
+      map.fitBounds(
+        L.latLngBounds(stations.map(({ lat, lng }) => [lat, lng] as [number, number])),
+        {
+          padding: [32, 32],
+          maxZoom: 6,
+          animate: false,
+        }
+      );
+      return;
     }
-  }, [station, map]);
+
+    if (!station || lastStationId.current === station.id) {
+      return;
+    }
+
+    lastStationId.current = station.id;
+    map.flyTo([station.lat, station.lng], Math.max(map.getZoom(), 10), { duration: 1.2 });
+  }, [map, station, stations]);
   return null;
 }
 
@@ -218,6 +233,10 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
   const [districtsGeo, setDistrictsGeo] = useState<FeatureCollection | null>(null);
   const [wardsGeo, setWardsGeo] = useState<FeatureCollection | null>(null);
   const [currentZoom, setCurrentZoom] = useState(6);
+  const mappableStations = useMemo(
+    () => stations.filter((station) => Number.isFinite(station.lat) && Number.isFinite(station.lng)),
+    [stations]
+  );
 
   // Load GeoJSON data
   useEffect(() => {
@@ -267,7 +286,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
     const centLng = totalLng / count;
 
     // Find closest station(s) within 1 degree (~100km)
-    const nearby = stations.filter(s => {
+    const nearby = mappableStations.filter(s => {
       const dist = Math.sqrt((s.lat - centLat) ** 2 + (s.lng - centLng) ** 2);
       return dist < 1.5;
     });
@@ -284,7 +303,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
     }
 
     return Math.round(weightedSum / weightTotal);
-  }, [stations]);
+  }, [mappableStations]);
 
   const regionStyle = useCallback((feature: Feature | undefined): PathOptions => {
     if (!feature) return {};
@@ -312,7 +331,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
 
     const name = feature.properties?.shapeName || 'Không rõ';
     const aqi = getRegionAqi(feature);
-    const label = aqi >= 0 ? getAQILabel(getAQILevel(aqi)) : 'Chưa có dữ liệu';
+    const label = aqi >= 0 ? getAqiLabel(aqi) : 'Chưa có dữ liệu';
     const color = aqi >= 0 ? getAQIColorForRegion(aqi) : '#999';
 
     (layer as any).bindPopup(`
@@ -397,12 +416,12 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
           scrollWheelZoom={false}
         >
           <TileLayer key={tileUrl} url={tileUrl} />
-          <FlyToStation station={selectedStation} />
+          <FlyToStation station={selectedStation} stations={mappableStations} />
           <ZoomWatcher onZoomChange={setCurrentZoom} />
 
-          {viewMode === 'heatmap' && <HeatmapLayer stations={stations} />}
+          {viewMode === 'heatmap' && <HeatmapLayer stations={mappableStations} />}
 
-          {viewMode === 'stations' && stations.map((station) => (
+          {viewMode === 'stations' && mappableStations.map((station) => (
             <CircleMarker
               key={station.id}
               center={[station.lat, station.lng]}
@@ -426,7 +445,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
                     <span className="font-bold" style={{ color: getMarkerColor(station.aqi) }}>
                       AQI: {station.aqi}
                     </span>
-                    {' '}- {getAQILabel(getAQILevel(station.aqi))}
+                    {' '}- {getAqiLabel(station.aqi)}
                   </p>
                   <p className="text-xs mt-1">PM2.5: {station.pm25} µg/m³</p>
                 </div>
@@ -436,7 +455,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
 
           {viewMode === 'regions' && geoData && (
             <GeoJSON
-              key={`geo-${showWards ? 'wards' : showDistricts ? 'districts' : 'provinces'}-${stations.length}`}
+              key={`geo-${showWards ? 'wards' : showDistricts ? 'districts' : 'provinces'}-${mappableStations.length}`}
               data={geoData}
               style={regionStyle}
               onEachFeature={onEachFeature}
@@ -444,7 +463,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
           )}
 
           {/* Show station markers on top of regions too, but smaller */}
-          {viewMode === 'regions' && stations.map((station) => (
+          {viewMode === 'regions' && mappableStations.map((station) => (
             <CircleMarker
               key={`region-marker-${station.id}`}
               center={[station.lat, station.lng]}

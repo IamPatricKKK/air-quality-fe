@@ -3,8 +3,7 @@ import { Header } from '@/components/dashboard/Header';
 import { AQISummary } from '@/components/dashboard/AQISummary';
 import { AQICard } from '@/components/dashboard/AQICard';
 import { AQIMap } from '@/components/dashboard/AQIMap';
-import { AQIChart } from '@/components/dashboard/AQIChart';
-import { StationDetail } from '@/components/dashboard/StationDetail';
+import { SelectedStationPanel } from '@/components/dashboard/SelectedStationPanel';
 import { RegionTable } from '@/components/dashboard/RegionTable';
 import { AlertPanel } from '@/components/dashboard/AlertPanel';
 import { SearchStation } from '@/components/dashboard/SearchStation';
@@ -12,47 +11,25 @@ import { LocationPrompt } from '@/components/dashboard/LocationPrompt';
 import { MobileNav, MobileTab } from '@/components/dashboard/MobileNav';
 import { MobileSearchView } from '@/components/dashboard/MobileSearchView';
 import { MobileProfileView } from '@/components/dashboard/MobileProfileView';
-import { useStations, StationWithReading } from '@/hooks/useStations';
+import { useStations } from '@/hooks/useStations';
 import { useNotifications } from '@/hooks/useNotifications';
 import { usePinnedStations } from '@/hooks/usePinnedStations';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { stations as mockStations, Station as MockStation } from '@/data/mockData';
+import type { StationWithReading } from '@/types';
 import { Search, X } from 'lucide-react';
-
-function toStation(s: StationWithReading): MockStation {
-  return {
-    id: s.id,
-    name: s.name,
-    region: s.region,
-    lat: s.lat,
-    lng: s.lng,
-    aqi: s.aqi,
-    pm25: s.pm25,
-    pm10: s.pm10,
-    o3: s.o3,
-    no2: s.no2,
-    so2: s.so2,
-    co: s.co,
-    temperature: s.temperature,
-    humidity: s.humidity,
-    lastUpdated: s.recorded_at,
-  };
-}
 
 const Index = () => {
   const { data: dbStations, isLoading } = useStations();
   const { data: notifications } = useNotifications();
   const { pinnedIds, togglePin, isPinned } = usePinnedStations();
   const isMobile = useIsMobile();
-  const [selectedStation, setSelectedStation] = useState<MockStation | null>(null);
+  const [selectedStation, setSelectedStation] = useState<StationWithReading | null>(null);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('home');
   const [cardSearch, setCardSearch] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
 
-  const stations: MockStation[] = dbStations?.length
-    ? dbStations.map(toStation)
-    : mockStations;
+  const stations: StationWithReading[] = dbStations ?? [];
 
   const unreadCount = notifications?.filter(n => !n.is_read).length ?? 0;
 
@@ -79,13 +56,50 @@ const Index = () => {
   }, [stations, pinnedIds, cardSearch, isPinned, selectedRegion]);
 
   useEffect(() => {
-    if (stations.length && !selectedStation) {
-      setSelectedStation(stations[0]);
+    if (!stations.length) {
+      setSelectedStation((current) => current ? null : current);
+      return;
     }
-  }, [stations, selectedStation]);
+
+    setSelectedStation((current) => {
+      if (!current) {
+        return stations[0];
+      }
+
+      const liveSelected = stations.find((station) => station.id === current.id);
+      if (!liveSelected) {
+        return stations[0];
+      }
+
+      if (
+        liveSelected.recorded_at !== current.recorded_at ||
+        liveSelected.aqi !== current.aqi ||
+        liveSelected.pm25 !== current.pm25 ||
+        liveSelected.pm10 !== current.pm10
+      ) {
+        return liveSelected;
+      }
+
+      return current;
+    });
+  }, [stations]);
 
   if (!selectedStation && stations.length) {
     return null;
+  }
+
+  if (!isLoading && stations.length === 0) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-12 md:px-6">
+        <div className="mx-auto max-w-2xl glass-card p-8 text-center">
+          <p className="text-sm uppercase tracking-[0.24em] text-primary/70">Live Data Only</p>
+          <h1 className="mt-3 text-3xl font-display font-bold text-foreground">Chưa có dữ liệu quan trắc trong DB</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Giao diện chỉ hiển thị khi pipeline ingest hoàn tất và đã ghi observation thật xuống PostgreSQL.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const handleMobileTabChange = (tab: MobileTab) => {
@@ -95,7 +109,7 @@ const Index = () => {
     setMobileTab(tab);
   };
 
-  const handleSearchSelect = (station: MockStation) => {
+  const handleSearchSelect = (station: StationWithReading) => {
     setSelectedStation(station);
     if (isMobile) setMobileTab('map');
   };
@@ -125,7 +139,7 @@ const Index = () => {
         <div className="px-3 py-3 space-y-3">
           {mobileTab === 'home' && (
             <>
-              <AQISummary />
+              <AQISummary stations={stations} />
               <div className="grid grid-cols-2 gap-2">
                 {sortedStations.slice(0, 4).map((station, i) => (
                   <AQICard
@@ -138,12 +152,7 @@ const Index = () => {
                   />
                 ))}
               </div>
-              {selectedStation && (
-                <>
-                  <AQIChart station={selectedStation} />
-                  <StationDetail station={selectedStation} />
-                </>
-              )}
+              {selectedStation && <SelectedStationPanel station={selectedStation} />}
               <RegionTable stations={stations} />
             </>
           )}
@@ -192,7 +201,7 @@ const Index = () => {
         <SearchStation stations={stations} onSelect={setSelectedStation} />
       </div>
 
-      <AQISummary />
+      <AQISummary stations={stations} />
 
       {/* Station cards with search & pin */}
       <div className="space-y-3">
@@ -239,19 +248,14 @@ const Index = () => {
           />
         </div>
         <div className="lg:col-span-1 space-y-4">
-          {selectedStation && (
-            <>
-              <AQIChart station={selectedStation} />
-              <StationDetail station={selectedStation} />
-            </>
-          )}
+          {selectedStation && <SelectedStationPanel station={selectedStation} />}
         </div>
       </div>
 
       <RegionTable stations={stations} />
 
       <LocationPrompt />
-      <AlertPanel open={alertsOpen} onClose={() => setAlertsOpen(false)} />
+      <AlertPanel open={alertsOpen} onClose={() => setAlertsOpen(false)} notifications={notifications} />
       {alertsOpen && (
         <div
           className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40"

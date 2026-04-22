@@ -1,0 +1,111 @@
+/**
+ * API client cho analytics endpoints (air-quality-be).
+ * BE URL khác với API URL (API = NestJS port 3002, BE = FastAPI port 8000).
+ * FE cần gọi BE cho analytics/forecast data.
+ */
+
+const BE_URL = import.meta.env.VITE_AIR_QUALITY_BE_URL;
+const SESSION_KEY = "air-quality-fe:user-session";
+
+function getAuth() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return undefined;
+    const s = JSON.parse(raw) as { access_token?: string };
+    return s.access_token ? `Bearer ${s.access_token}` : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function beRequest<T>(path: string): Promise<T> {
+  if (!BE_URL) throw new Error("BE URL not configured (VITE_AIR_QUALITY_BE_URL)");
+  const auth = getAuth();
+  const res = await fetch(`${BE_URL}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(auth ? { Authorization: auth } : {}),
+    },
+  });
+  if (!res.ok) throw new Error(`BE request failed: ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+// ---------- Types ----------
+
+export interface ForecastPoint {
+  predictedAt: string;
+  predictedValue: number;
+  lowerBound: number | null;
+  upperBound: number | null;
+}
+
+export interface ForecastRun {
+  id: string;
+  stationId: string;
+  stationName: string;
+  modelType: string;
+  targetMetric: string;
+  horizonHours: number;
+  mae: number | null;
+  rmse: number | null;
+  mape: number | null;
+  trainingRows: number;
+  status: string;
+  startedAt: string;
+  finishedAt: string | null;
+}
+
+export interface ForecastLatest {
+  run: ForecastRun;
+  points: ForecastPoint[];
+}
+
+export interface DailySummary {
+  id: string;
+  stationId: string;
+  stationName: string;
+  summaryDate: string;
+  samples: number;
+  aqiAvg: number | null;
+  aqiMin: number | null;
+  aqiMax: number | null;
+  aqiStddev: number | null;
+  pm25Avg: number | null;
+  pm10Avg: number | null;
+  category: string | null;
+}
+
+export interface Anomaly {
+  id: string;
+  stationId: string;
+  stationName: string;
+  metric: string;
+  detectedAt: string;
+  value: number;
+  zScore: number | null;
+  iqrFactor: number | null;
+  method: string;
+  severity: string;
+  description: string;
+}
+
+// ---------- API calls ----------
+
+export function getLatestForecast(stationId: string, metric = "aqi") {
+  return beRequest<ForecastLatest>(
+    `/analytics/forecast/latest?stationId=${stationId}&metric=${metric}`
+  );
+}
+
+export function getDailySummaries(stationId?: string, days = 30) {
+  const params = new URLSearchParams({ days: String(days) });
+  if (stationId) params.set("stationId", stationId);
+  return beRequest<DailySummary[]>(`/analytics/daily-summaries?${params}`);
+}
+
+export function getAnomalies(stationId?: string, days = 7) {
+  const params = new URLSearchParams({ days: String(days) });
+  if (stationId) params.set("stationId", stationId);
+  return beRequest<Anomaly[]>(`/analytics/anomalies?${params}`);
+}

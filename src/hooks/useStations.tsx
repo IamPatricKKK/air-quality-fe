@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getStationHistory, listStations } from "@/api/stations";
-import type { StationHistoryPoint, StationWithReading } from "@/types";
+import { getStationAnalytics, getStationHistory, listStations } from "@/api/stations";
+import type { StationAnalytics, StationHistoryPoint, StationWithReading } from "@/types";
 
-export type { StationHistoryPoint, StationWithReading };
+export type { StationAnalytics, StationHistoryPoint, StationWithReading };
 
 export function useStations() {
   return useQuery({
@@ -22,5 +22,17 @@ export function useStationHistory(stationId: string | undefined, hours = 24) {
       return getStationHistory(stationId, hours);
     },
     enabled: Boolean(stationId),
+  });
+}
+
+export function useStationAnalytics(stationId: string | undefined) {
+  return useQuery({
+    queryKey: ["station-analytics", stationId],
+    queryFn: (): Promise<StationAnalytics> => {
+      if (!stationId) return Promise.reject(new Error("no station"));
+      return getStationAnalytics(stationId);
+    },
+    enabled: Boolean(stationId),
+    refetchInterval: 5 * 60 * 1000,
   });
 }

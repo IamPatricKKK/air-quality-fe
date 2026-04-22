@@ -45,6 +45,42 @@ export interface StationHistoryPoint {
   aqi: number;
   pm25: number;
   pm10: number;
+  o3?: number | null;
+  no2?: number | null;
+}
+
+export interface StationAnalytics {
+  station: { id: string; code: string; name: string };
+  current: {
+    aqi: number | null;
+    category: string | null;
+    pm25: number | null;
+    pm10: number | null;
+    o3: number | null;
+    no2: number | null;
+    so2: number | null;
+    co: number | null;
+    temperature: number | null;
+    humidity: number | null;
+    wind_speed: number | null;
+    observed_at: string | null;
+  };
+  summary_24h: {
+    samples: number;
+    aqi_avg: number | null;
+    aqi_min: number | null;
+    aqi_max: number | null;
+    pm25_avg: number | null;
+    pm10_avg: number | null;
+    category: string | null;
+  };
+  forecast: {
+    slope_per_hour: number | null;
+    aqi_next_1h: number | null;
+    aqi_next_3h: number | null;
+    aqi_next_6h: number | null;
+    category_6h: string | null;
+  };
 }
 
 export interface UserNotification {

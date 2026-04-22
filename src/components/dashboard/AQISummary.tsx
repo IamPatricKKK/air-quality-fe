@@ -1,11 +1,18 @@
 import { motion } from 'framer-motion';
-import { stations } from '@/data/mockData';
 import { Activity, AlertTriangle, MapPin, Wind } from 'lucide-react';
+import type { Station } from '@/data/mockData';
 
-export function AQISummary() {
+interface AQISummaryProps {
+  stations: Station[];
+}
+
+export function AQISummary({ stations }: AQISummaryProps) {
+  if (stations.length === 0) {
+    return null;
+  }
+
   const avgAqi = Math.round(stations.reduce((sum, s) => sum + s.aqi, 0) / stations.length);
   const alertCount = stations.filter(s => s.aqi > 100).length;
-  const bestStation = [...stations].sort((a, b) => a.aqi - b.aqi)[0];
   const worstStation = [...stations].sort((a, b) => b.aqi - a.aqi)[0];
 
   const cards = [

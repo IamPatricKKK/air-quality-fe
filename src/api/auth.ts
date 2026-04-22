@@ -1,5 +1,4 @@
-import { hasAirQualityApi, airQualityApiRequest } from "@/api/client";
-import { getCurrentSession, signInMock, signOutMock, signUpMock } from "@/api/mock";
+import { airQualityApiRequest } from "@/api/client";
 import type { AppSession, AppUser, AuthPayload } from "@/types";
 
 const SESSION_KEY = "air-quality-fe:user-session";
@@ -34,10 +33,6 @@ function persistSession(payload: AuthResponse) {
 }
 
 export async function signIn(payload: AuthPayload) {
-  if (!hasAirQualityApi()) {
-    return signInMock(payload);
-  }
-
   const result = await airQualityApiRequest<AuthResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -47,10 +42,6 @@ export async function signIn(payload: AuthPayload) {
 }
 
 export async function signUp(payload: AuthPayload) {
-  if (!hasAirQualityApi()) {
-    return signUpMock(payload);
-  }
-
   const result = await airQualityApiRequest<AuthResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -60,19 +51,11 @@ export async function signUp(payload: AuthPayload) {
 }
 
 export async function signOut() {
-  if (!hasAirQualityApi()) {
-    return signOutMock();
-  }
-
   await airQualityApiRequest("/auth/logout", { method: "POST" });
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(SESSION_KEY);
 }
 
 export function getStoredSession() {
-  if (!hasAirQualityApi()) {
-    return getCurrentSession();
-  }
-
   return readStoredSession();
 }

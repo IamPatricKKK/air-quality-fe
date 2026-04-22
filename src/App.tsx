@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
+import StationDetailPage from "@/pages/StationDetailPage";
+import AlertSettings from "@/pages/AlertSettings";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +52,8 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                <Route path="/stations/:id" element={<ProtectedRoute><StationDetailPage /></ProtectedRoute>} />
+                <Route path="/settings/alerts" element={<ProtectedRoute><AlertSettings /></ProtectedRoute>} />
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
