@@ -465,7 +465,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
                       <div>
                         <span className="opacity-60">PM10</span>
                         <br />
-                        <span className="font-medium">{(station as any).pm10 ?? '—'} µg/m³</span>
+                        <span className="font-medium">{station.pm10 ?? '—'} µg/m³</span>
                       </div>
                     </div>
                   </div>
