@@ -99,6 +99,9 @@ export interface UserPreferences {
   pushEnabled: boolean;
   emailEnabled: boolean;
   pinnedStationIds: string[];
+  quietHoursEnabled?: boolean;
+  quietHoursStartMin?: number;
+  quietHoursEndMin?: number;
   location?: {
     lat: number;
     lng: number;

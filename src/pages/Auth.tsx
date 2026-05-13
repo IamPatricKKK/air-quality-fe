@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Wind, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -122,12 +122,17 @@ const Auth = () => {
           </form>
 
           {isLogin && (
-            <p className="text-center text-xs text-muted-foreground mt-4">
-              Chưa có tài khoản?{' '}
-              <button onClick={() => setIsLogin(false)} className="text-primary hover:underline">
-                Đăng ký ngay
-              </button>
-            </p>
+            <div className="space-y-2 mt-4 text-center">
+              <Link to="/auth/forgot" className="block text-xs text-muted-foreground hover:text-primary">
+                Quên mật khẩu?
+              </Link>
+              <p className="text-xs text-muted-foreground">
+                Chưa có tài khoản?{' '}
+                <button onClick={() => setIsLogin(false)} className="text-primary hover:underline">
+                  Đăng ký ngay
+                </button>
+              </p>
+            </div>
           )}
         </div>
       </motion.div>

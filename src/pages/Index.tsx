@@ -11,18 +11,37 @@ import { LocationPrompt } from '@/components/dashboard/LocationPrompt';
 import { MobileNav, MobileTab } from '@/components/dashboard/MobileNav';
 import { MobileSearchView } from '@/components/dashboard/MobileSearchView';
 import { MobileProfileView } from '@/components/dashboard/MobileProfileView';
+import {
+  AQISummarySkeleton,
+  StationCardSkeleton,
+  MapSkeleton,
+  SelectedStationSkeleton,
+} from '@/components/dashboard/skeletons';
 import { useStations } from '@/hooks/useStations';
 import { useNotifications } from '@/hooks/useNotifications';
 import { usePinnedStations } from '@/hooks/usePinnedStations';
+import { useCompareStations } from '@/hooks/useCompareStations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { StationWithReading } from '@/types';
-import { Search, X } from 'lucide-react';
+import { Search, X, GitCompare } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { data: dbStations, isLoading } = useStations();
   const { data: notifications } = useNotifications();
   const { pinnedIds, togglePin, isPinned } = usePinnedStations();
+  const compare = useCompareStations();
   const isMobile = useIsMobile();
+
+  const handleToggleCompare = (stationId: string) => {
+    const result = compare.toggle(stationId);
+    if (!result.ok && result.reason === 'limit') {
+      toast.warning(`Chỉ so sánh được tối đa ${compare.max} trạm`, {
+        description: 'Bỏ một trạm trước khi thêm trạm mới.',
+      });
+    }
+  };
   const [selectedStation, setSelectedStation] = useState<StationWithReading | null>(null);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('home');
@@ -88,6 +107,23 @@ const Index = () => {
     return null;
   }
 
+  if (isLoading && stations.length === 0) {
+    return (
+      <div className="min-h-screen bg-background p-3 md:p-4 lg:p-6 space-y-4">
+        <AQISummarySkeleton />
+        <StationCardSkeleton count={5} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 h-[520px]">
+            <MapSkeleton />
+          </div>
+          <div className="lg:col-span-1">
+            <SelectedStationSkeleton />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoading && stations.length === 0) {
     return (
       <div className="min-h-screen bg-background px-4 py-12 md:px-6">
@@ -149,6 +185,8 @@ const Index = () => {
                     index={i}
                     isPinned={isPinned(station.id)}
                     onTogglePin={togglePin}
+                    isCompared={compare.isCompared(station.id)}
+                    onToggleCompare={handleToggleCompare}
                   />
                 ))}
               </div>
@@ -234,6 +272,8 @@ const Index = () => {
               index={i}
               isPinned={isPinned(station.id)}
               onTogglePin={togglePin}
+              isCompared={compare.isCompared(station.id)}
+              onToggleCompare={handleToggleCompare}
             />
           ))}
         </div>
@@ -253,6 +293,16 @@ const Index = () => {
       </div>
 
       <RegionTable stations={stations} />
+
+      {compare.ids.length >= 2 && (
+        <Link
+          to="/compare"
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-orange-500 text-white shadow-2xl shadow-orange-500/30 hover:bg-orange-600 transition-all"
+        >
+          <GitCompare className="w-4 h-4" />
+          <span className="text-sm font-medium">So sánh {compare.ids.length} trạm</span>
+        </Link>
+      )}
 
       <LocationPrompt />
       <AlertPanel open={alertsOpen} onClose={() => setAlertsOpen(false)} notifications={notifications} />

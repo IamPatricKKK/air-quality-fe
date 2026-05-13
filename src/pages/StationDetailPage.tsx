@@ -3,6 +3,9 @@ import { ArrowLeft, Loader2, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { useStations, useStationHistory, useStationAnalytics } from "@/hooks/useStations";
 import { AQIChart } from "@/components/dashboard/AQIChart";
+import { AQICalendar } from "@/components/dashboard/AQICalendar";
+import { HealthAdvice } from "@/components/dashboard/HealthAdvice";
+import { PersonalExposure } from "@/components/dashboard/PersonalExposure";
 import { StationDetail } from "@/components/dashboard/StationDetail";
 import { StationAnalyticsPanel } from "@/components/dashboard/StationAnalyticsPanel";
 import { ForecastChart } from "@/components/dashboard/ForecastChart";
@@ -71,18 +74,16 @@ export default function StationDetailPage() {
         </div>
       </div>
 
-      {epa.healthAdvice && (
-        <div
-          className="glass-card p-4 text-sm border-l-4"
-          style={{ borderLeftColor: epa.color }}
-        >
-          <strong>Khuyến nghị sức khoẻ:</strong> {epa.healthAdvice}
-        </div>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <HealthAdvice aqi={station.aqi} />
+        <PersonalExposure stationId={station.id} />
+      </div>
 
       <StationAnalyticsPanel stationId={station.id} />
 
       <ForecastChart stationId={station.id} />
+
+      <AQICalendar stationId={station.id} days={30} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <AQIChart station={station} />

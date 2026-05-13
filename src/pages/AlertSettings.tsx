@@ -142,10 +142,10 @@ export default function AlertSettings() {
                 onChange={(e) => setForm({ ...form, cooldown_min: Number(e.target.value) })}
               />
             </div>
-            <div>
+            <div className="col-span-2 md:col-span-3">
               <label className="text-xs text-muted-foreground">Kênh gửi</label>
-              <div className="flex gap-3 mt-2">
-                <label className="flex items-center gap-1 text-xs cursor-pointer">
+              <div className="flex flex-wrap gap-3 mt-2">
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.channels?.includes("in_app")}
@@ -153,7 +153,7 @@ export default function AlertSettings() {
                   />
                   In-app
                 </label>
-                <label className="flex items-center gap-1 text-xs cursor-pointer">
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.channels?.includes("email")}
@@ -161,7 +161,18 @@ export default function AlertSettings() {
                   />
                   Email
                 </label>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.channels?.includes("push")}
+                    onChange={() => toggleChannel("push")}
+                  />
+                  Push (PWA)
+                </label>
               </div>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                Push yêu cầu đã bật thông báo đẩy trong Cài đặt thông báo.
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
