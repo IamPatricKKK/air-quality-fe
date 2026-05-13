@@ -59,3 +59,17 @@ export async function signOut() {
 export function getStoredSession() {
   return readStoredSession();
 }
+
+export async function requestPasswordReset(email: string) {
+  return airQualityApiRequest<{ success: boolean; message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(token: string, password: string) {
+  return airQualityApiRequest<{ success: boolean }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+  });
+}

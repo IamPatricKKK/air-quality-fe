@@ -5,6 +5,7 @@ import { useStationHistory } from '@/hooks/useStations';
 import { aqiReferenceLines } from '@/lib/aqi';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import { CsvDownloadButton } from '@/components/CsvDownloadButton';
 
 interface AQIChartProps {
   station: Station;
@@ -26,11 +27,14 @@ export function AQIChart({ station }: AQIChartProps) {
       transition={{ delay: 0.3 }}
       className="glass-card p-4"
     >
-      <div className="mb-4">
-        <h2 className="text-sm font-semibold font-display text-foreground">
-          Diễn biến AQI - {station.name}
-        </h2>
-        <p className="text-xs text-muted-foreground mt-0.5">24 giờ qua</p>
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold font-display text-foreground">
+            Diễn biến AQI - {station.name}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">24 giờ qua</p>
+        </div>
+        <CsvDownloadButton stationId={station.id} stationCode={station.region} hours={24} />
       </div>
 
       <div className="h-52">

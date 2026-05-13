@@ -1,11 +1,32 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { User, Mail, MapPin, Bell, LogOut, Moon } from 'lucide-react';
+import { User, Mail, MapPin, LogOut, Moon, Info } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationSettings } from '@/components/dashboard/NotificationSettings';
+import { getUserPreferences } from '@/api/profile';
 import { motion } from 'framer-motion';
 
 export function MobileProfileView() {
   const { user, signOut } = useAuth();
+  const [locationShared, setLocationShared] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getUserPreferences(user.id)
+      .then((prefs) => {
+        if (!cancelled) {
+          setLocationShared(Boolean(prefs.location?.lat && prefs.location?.lng));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLocationShared(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   return (
     <div className="space-y-4">
@@ -46,11 +67,32 @@ export function MobileProfileView() {
             <MapPin className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm text-foreground">Vị trí</span>
           </div>
-          <span className="text-xs text-primary">Đã chia sẻ</span>
+          <span
+            className={`text-xs ${
+              locationShared === null
+                ? 'text-muted-foreground'
+                : locationShared
+                  ? 'text-primary'
+                  : 'text-muted-foreground'
+            }`}
+          >
+            {locationShared === null ? '…' : locationShared ? 'Đã chia sẻ' : 'Chưa chia sẻ'}
+          </span>
         </div>
       </motion.div>
 
       <NotificationSettings />
+
+      <Link
+        to="/about"
+        className="glass-card flex items-center justify-between px-4 py-3.5 hover:bg-secondary/20 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <Info className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm text-foreground">Giới thiệu</span>
+        </div>
+        <span className="text-xs text-muted-foreground">v0.1.0</span>
+      </Link>
 
       <motion.button
         initial={{ opacity: 0, y: 10 }}

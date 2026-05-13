@@ -86,6 +86,17 @@ export function AlertPanel({ open, onClose }: AlertPanelProps) {
             </div>
           </div>
 
+          {/* View all link */}
+          <div className="px-4 py-2 border-b border-border/30 bg-secondary/30">
+            <Link
+              to="/alerts"
+              onClick={onClose}
+              className="text-xs text-primary hover:underline flex items-center justify-center gap-1"
+            >
+              Xem toàn bộ lịch sử →
+            </Link>
+          </div>
+
           {/* Alerts list */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {alerts.length === 0 && (
