@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, GeoJSON, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import 'leaflet.heat';
 import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
 import { getAqiColor, getAqiLabel, getAqiCategory } from '@/lib/aqi';
 import { motion } from 'framer-motion';
@@ -12,6 +11,11 @@ import type { Feature, FeatureCollection } from 'geojson';
 import type { Layer, PathOptions } from 'leaflet';
 import { createAqiPinIcon } from './AQIPin';
 import { AQILegend } from './AQILegend';
+import { useGridAqi } from '@/hooks/useGridAqi';
+import type { GridPoint } from '@/api/analytics';
+
+const WAQI_TILE_TOKEN = (import.meta.env.VITE_WAQI_TILE_TOKEN as string | undefined)?.trim() || 'demo';
+const WAQI_TILE_URL = `https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=${WAQI_TILE_TOKEN}`;
 
 
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
@@ -133,63 +137,6 @@ function FlyToStation({ station, stations }: { station: Station | null; stations
 
 type MapViewMode = 'stations' | 'regions' | 'heatmap';
 
-// Heatmap layer component
-function HeatmapLayer({ stations }: { stations: Station[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!stations.length) return;
-
-    const points: [number, number, number][] = [];
-    for (const s of stations) {
-      const intensity = Math.max(0.2, Math.min(s.aqi / 180, 1));
-      points.push([s.lat, s.lng, intensity]);
-
-      // Dense interpolation rings for smooth regional coverage
-      const rings = [0.03, 0.07, 0.12, 0.18, 0.26, 0.36, 0.5, 0.7, 0.95];
-      const angleStep = 20;
-      for (const r of rings) {
-        const decay = Math.exp(-r * 2.8);
-        for (let a = 0; a < 360; a += angleStep) {
-          const rad = (a * Math.PI) / 180;
-          points.push([
-            s.lat + r * Math.sin(rad),
-            s.lng + r * Math.cos(rad),
-            intensity * decay,
-          ]);
-        }
-      }
-    }
-
-    const heat = (L as any).heatLayer(points, {
-      radius: 55,
-      blur: 40,
-      maxZoom: 14,
-      max: 1,
-      minOpacity: 0.3,
-      gradient: {
-        0.0: '#22c55e',
-        0.12: '#4ade80',
-        0.25: '#a3e635',
-        0.35: '#eab308',
-        0.45: '#f59e0b',
-        0.55: '#f97316',
-        0.65: '#ef4444',
-        0.75: '#dc2626',
-        0.85: '#a855f7',
-        0.92: '#7c3aed',
-        1.0: '#7f1d1d',
-      },
-    });
-
-    heat.addTo(map);
-    return () => {
-      map.removeLayer(heat);
-    };
-  }, [map, stations]);
-
-  return null;
-}
 
 interface ZoomWatcherProps {
   onZoomChange: (zoom: number) => void;
@@ -239,6 +186,10 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
     () => stations.filter((station) => Number.isFinite(station.lat) && Number.isFinite(station.lng)),
     [stations]
   );
+
+  // Lưới AQI (~700 điểm) từ Open-Meteo phủ toàn VN — chỉ enable cho mode 'stations' và 'heatmap'.
+  const { data: gridData } = useGridAqi(viewMode !== 'regions');
+  const gridPoints: GridPoint[] = gridData?.data ?? [];
 
   // Load GeoJSON data
   useEffect(() => {
@@ -421,7 +372,89 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
           <FlyToStation station={selectedStation} stations={mappableStations} />
           <ZoomWatcher onZoomChange={setCurrentZoom} />
 
-          {viewMode === 'heatmap' && <HeatmapLayer stations={mappableStations} />}
+          {viewMode === 'heatmap' && (
+            <>
+              {/* WAQI tile layer — pre-rendered AQI heatmap toàn cầu, look-and-feel giống IQAir. */}
+              <TileLayer
+                url={WAQI_TILE_URL}
+                opacity={0.6}
+                attribution='Air Quality Tiles © <a href="https://waqi.info">waqi.info</a>'
+                zIndex={400}
+              />
+              {/* Vẫn hiển thị marker trạm thật (nhỏ hơn) để user click xem chi tiết */}
+              {mappableStations.map((station) => (
+                <CircleMarker
+                  key={`heat-marker-${station.id}`}
+                  center={[station.lat, station.lng]}
+                  radius={6}
+                  pathOptions={{
+                    fillColor: getMarkerColor(station.aqi),
+                    fillOpacity: 1,
+                    color: '#fff',
+                    weight: 2,
+                  }}
+                  eventHandlers={{
+                    click: () => onSelectStation(station),
+                  }}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <p className="font-bold">{station.name}</p>
+                      <p style={{ color: getMarkerColor(station.aqi), fontWeight: 'bold' }}>
+                        AQI: {station.aqi}
+                      </p>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              ))}
+            </>
+          )}
+
+          {/* Lưới AQI từ Open-Meteo (CAMS) — phủ toàn VN cho các khu vực không có trạm thật.
+              Hiển thị mờ ở mode "Trạm" để trạm thật vẫn nổi bật;
+              ẩn hoàn toàn ở mode "Nhiệt" vì WAQI tile đã cover. */}
+          {viewMode === 'stations' && gridPoints.map((g) => (
+            <CircleMarker
+              key={`grid-${g.id}`}
+              center={[g.lat, g.lng]}
+              radius={5}
+              pathOptions={{
+                fillColor: getAqiColor(g.aqi),
+                fillOpacity: 0.5,
+                color: getAqiColor(g.aqi),
+                weight: 1,
+                opacity: 0.4,
+              }}
+            >
+              <Popup>
+                <div className="text-xs min-w-[160px]">
+                  <p className="font-semibold text-[12px]">{g.province_name ?? 'Khu vực'}</p>
+                  <div
+                    className="mt-1.5 rounded px-2 py-1 inline-flex items-baseline gap-1.5"
+                    style={{ backgroundColor: getAqiColor(g.aqi), color: '#fff' }}
+                  >
+                    <span className="text-base font-black tabular-nums">{g.aqi}</span>
+                    <span className="text-[10px] font-semibold">AQI US</span>
+                  </div>
+                  <div className="mt-1.5 grid grid-cols-2 gap-1 text-[10px]">
+                    <div>
+                      <span className="opacity-60">PM2.5</span>
+                      <br />
+                      <span className="font-medium">{g.pm25?.toFixed(1) ?? '—'} µg/m³</span>
+                    </div>
+                    <div>
+                      <span className="opacity-60">PM10</span>
+                      <br />
+                      <span className="font-medium">{g.pm10?.toFixed(1) ?? '—'} µg/m³</span>
+                    </div>
+                  </div>
+                  <p className="mt-1.5 text-[10px] opacity-60 italic">
+                    Dữ liệu mô hình (Open-Meteo CAMS) — khu vực không có trạm thật.
+                  </p>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
 
           {viewMode === 'stations' && mappableStations.map((station) => {
             const isSelected = station.id === selectedStation?.id;

@@ -109,3 +109,54 @@ export function getAnomalies(stationId?: string, days = 7) {
   if (stationId) params.set("stationId", stationId);
   return beRequest<Anomaly[]>(`/analytics/anomalies?${params}`);
 }
+
+// ---------- Grid AQI (phủ toàn VN từ Open-Meteo) ----------
+
+export interface GridPoint {
+  id: string;
+  lat: number;
+  lng: number;
+  province_code: string | null;
+  province_name: string | null;
+  aqi: number;
+  pm25: number | null;
+  pm10: number | null;
+  observed_at: string | null;
+  source_code: string;
+  confidence_score: number | null;
+}
+
+export interface GridLatestResponse {
+  count: number;
+  data: GridPoint[];
+}
+
+export function getGridLatest(opts: {
+  bounds?: string;
+  province?: string;
+  maxAgeHours?: number;
+} = {}) {
+  const params = new URLSearchParams();
+  if (opts.bounds) params.set("bounds", opts.bounds);
+  if (opts.province) params.set("province", opts.province);
+  if (opts.maxAgeHours) params.set("max_age_hours", String(opts.maxAgeHours));
+  const qs = params.toString();
+  return beRequest<GridLatestResponse>(
+    qs ? `/analytics/grid/latest?${qs}` : "/analytics/grid/latest"
+  );
+}
+
+export interface GridStats {
+  total_grid_points: number;
+  fresh_within_6h: number;
+  by_source: Array<{
+    source_code: string;
+    count: number;
+    first_at: string | null;
+    last_at: string | null;
+  }>;
+}
+
+export function getGridStats() {
+  return beRequest<GridStats>("/analytics/grid/stats");
+}
