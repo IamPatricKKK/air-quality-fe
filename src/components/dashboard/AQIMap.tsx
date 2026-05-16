@@ -6,7 +6,7 @@ import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
 import { getAqiColor, getAqiLabel, getAqiCategory } from '@/lib/aqi';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { Layers, Radio, Flame } from 'lucide-react';
+import { Layers, Radio, Flame, Info } from 'lucide-react';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { Layer, PathOptions } from 'leaflet';
 import { createAqiPinIcon } from './AQIPin';
@@ -327,6 +327,20 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
               showWards ? 'Hiện ranh giới phường/xã' : (showDistricts ? 'Hiện ranh giới quận/huyện — zoom vào để xem phường/xã' : 'Hiện ranh giới tỉnh/thành phố — zoom vào để xem chi tiết hơn')
             )}
           </p>
+          {viewMode === 'stations' && gridPoints.length > 0 && (
+            <p
+              className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground cursor-help"
+              title={
+                'Khu vực không có trạm quan trắc vẫn hiển thị AQI nhờ dữ liệu mô hình ' +
+                'CAMS (Copernicus Atmosphere Monitoring Service) qua Open-Meteo, ' +
+                'kết hợp nội suy IDW từ các trạm thật gần nhất. ' +
+                'Độ tin cậy: 🟢 có trạm gần · 🟡 kết hợp trạm + mô hình · 🟠 chỉ mô hình.'
+              }
+            >
+              <Info className="w-3 h-3" />
+              Tại sao có dữ liệu dù không có trạm?
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
           <button
@@ -448,9 +462,23 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
                       <span className="font-medium">{g.pm10?.toFixed(1) ?? '—'} µg/m³</span>
                     </div>
                   </div>
-                  <p className="mt-1.5 text-[10px] opacity-60 italic">
-                    Dữ liệu mô hình (Open-Meteo CAMS) — khu vực không có trạm thật.
-                  </p>
+                  {(() => {
+                    const conf = g.confidence_score ?? 0;
+                    const fused = g.source_code === 'fused';
+                    const label = fused && conf >= 0.8
+                      ? { dot: '🟢', text: 'Có trạm thật gần — độ tin cậy cao' }
+                      : fused
+                        ? { dot: '🟡', text: 'Kết hợp trạm thật + mô hình CAMS' }
+                        : { dot: '🟠', text: 'Mô hình CAMS — không có trạm gần' };
+                    return (
+                      <div className="mt-1.5 text-[10px]">
+                        <span className="font-medium">{label.dot} {label.text}</span>
+                        <span className="opacity-60">
+                          {' '}· tin cậy {Math.round(conf * 100)}%
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </Popup>
             </CircleMarker>
