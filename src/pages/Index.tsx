@@ -5,6 +5,7 @@ import { AQICard } from '@/components/dashboard/AQICard';
 import { AQIMap } from '@/components/dashboard/AQIMap';
 import { SelectedStationPanel } from '@/components/dashboard/SelectedStationPanel';
 import { RegionTable } from '@/components/dashboard/RegionTable';
+import { WardAqiPanel } from '@/components/dashboard/WardAqiPanel';
 import { AlertPanel } from '@/components/dashboard/AlertPanel';
 import { SearchStation } from '@/components/dashboard/SearchStation';
 import { LocationPrompt } from '@/components/dashboard/LocationPrompt';
@@ -192,6 +193,7 @@ const Index = () => {
               </div>
               {selectedStation && <SelectedStationPanel station={selectedStation} />}
               <RegionTable stations={stations} />
+              <WardAqiPanel />
             </>
           )}
 
@@ -293,6 +295,8 @@ const Index = () => {
       </div>
 
       <RegionTable stations={stations} />
+
+      <WardAqiPanel />
 
       {compare.ids.length >= 2 && (
         <Link

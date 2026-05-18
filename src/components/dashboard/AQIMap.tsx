@@ -3,23 +3,22 @@ import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, GeoJSON, 
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
+import { AQIInterpolationLayer } from './AQIInterpolationLayer';
 import { getAqiColor, getAqiLabel, getAqiCategory } from '@/lib/aqi';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { Layers, Radio, Flame, Info } from 'lucide-react';
+import { Layers, Radio, Flame } from 'lucide-react';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { Layer, PathOptions } from 'leaflet';
 import { createAqiPinIcon } from './AQIPin';
 import { AQILegend } from './AQILegend';
-import { useGridAqi } from '@/hooks/useGridAqi';
-import type { GridPoint } from '@/api/analytics';
 
-const WAQI_TILE_TOKEN = (import.meta.env.VITE_WAQI_TILE_TOKEN as string | undefined)?.trim() || 'demo';
-const WAQI_TILE_URL = `https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=${WAQI_TILE_TOKEN}`;
 
 
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+// Zoom đủ sâu thì chuyển từ ranh giới tỉnh sang xã/phường (mô hình 2 cấp).
+const WARD_ZOOM = 9;
 const REGION_FILL_OPACITY = 0.1;
 const REGION_EMPTY_OPACITY = 0.04;
 
@@ -29,72 +28,6 @@ function getMarkerColor(aqi: number): string {
 
 function getAQIColorForRegion(aqi: number): string {
   return getAqiColor(aqi);
-}
-
-type Ring = number[][];
-type PolygonCoords = Ring[];
-type MultiPolygonCoords = PolygonCoords[];
-
-function ringArea(ring: Ring): number {
-  if (ring.length < 3) return 0;
-  let sum = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const [x1, y1] = ring[i];
-    const [x2, y2] = ring[(i + 1) % ring.length];
-    sum += x1 * y2 - x2 * y1;
-  }
-  return Math.abs(sum / 2);
-}
-
-function getLargestOuterRing(rings: PolygonCoords): Ring | null {
-  if (!rings?.length) return null;
-  return rings.reduce((largest, current) => (ringArea(current) > ringArea(largest) ? current : largest));
-}
-
-function normalizeRegionGeoJSON(fc: FeatureCollection): FeatureCollection {
-  return {
-    ...fc,
-    features: fc.features
-      .map((feature) => {
-        if (!feature.geometry) return feature;
-
-        if (feature.geometry.type === 'Polygon') {
-          const outer = getLargestOuterRing(feature.geometry.coordinates as PolygonCoords);
-          if (!outer) return null;
-          return {
-            ...feature,
-            geometry: {
-              type: 'Polygon' as const,
-              coordinates: [outer],
-            },
-          };
-        }
-
-        if (feature.geometry.type === 'MultiPolygon') {
-          const normalized = (feature.geometry.coordinates as MultiPolygonCoords)
-            .map((polygon) => getLargestOuterRing(polygon))
-            .filter((ring): ring is Ring => Boolean(ring))
-            .map((ring) => [ring]);
-
-          if (!normalized.length) return null;
-          return {
-            ...feature,
-            geometry: normalized.length === 1
-              ? {
-                  type: 'Polygon' as const,
-                  coordinates: normalized[0],
-                }
-              : {
-                  type: 'MultiPolygon' as const,
-                  coordinates: normalized,
-                },
-          };
-        }
-
-        return feature;
-      })
-      .filter((feature): feature is Feature => Boolean(feature)),
-  };
 }
 
 function FlyToStation({ station, stations }: { station: Station | null; stations: Station[] }) {
@@ -179,7 +112,6 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
   const tileUrl = resolvedTheme === 'dark' ? TILE_DARK : TILE_LIGHT;
   const [viewMode, setViewMode] = useState<MapViewMode>('stations');
   const [provincesGeo, setProvincesGeo] = useState<FeatureCollection | null>(null);
-  const [districtsGeo, setDistrictsGeo] = useState<FeatureCollection | null>(null);
   const [wardsGeo, setWardsGeo] = useState<FeatureCollection | null>(null);
   const [currentZoom, setCurrentZoom] = useState(6);
   const mappableStations = useMemo(
@@ -187,33 +119,24 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
     [stations]
   );
 
-  // Lưới AQI (~700 điểm) từ Open-Meteo phủ toàn VN — chỉ enable cho mode 'stations' và 'heatmap'.
-  const { data: gridData } = useGridAqi(viewMode !== 'regions');
-  const gridPoints: GridPoint[] = gridData?.data ?? [];
-
-  // Load GeoJSON data
+  // Load GeoJSON data — mô hình 2 cấp sau cải cách 2025: tỉnh → xã/phường.
+  // Dùng hình học OSM nguyên vẹn (không normalize) để không méo/hở ranh giới.
   useEffect(() => {
     if (viewMode === 'regions') {
       if (!provincesGeo) {
         fetch('/vn-provinces.geojson')
           .then(r => r.json())
-          .then((data: FeatureCollection) => setProvincesGeo(normalizeRegionGeoJSON(data)))
+          .then((data: FeatureCollection) => setProvincesGeo(data))
           .catch(console.error);
       }
-      if (!districtsGeo) {
-        fetch('/vn-districts.geojson')
-          .then(r => r.json())
-          .then((data: FeatureCollection) => setDistrictsGeo(normalizeRegionGeoJSON(data)))
-          .catch(console.error);
-      }
-      if (!wardsGeo && currentZoom >= 11) {
+      if (!wardsGeo && currentZoom >= WARD_ZOOM) {
         fetch('/vn-wards.geojson')
           .then(r => r.json())
-          .then((data: FeatureCollection) => setWardsGeo(normalizeRegionGeoJSON(data)))
+          .then((data: FeatureCollection) => setWardsGeo(data))
           .catch(console.error);
       }
     }
-  }, [viewMode, provincesGeo, districtsGeo, wardsGeo, currentZoom]);
+  }, [viewMode, provincesGeo, wardsGeo, currentZoom]);
 
   // Calculate average AQI for a region by finding nearby stations
   const getRegionAqi = useCallback((feature: Feature): number => {
@@ -307,9 +230,8 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
     });
   }, [getRegionAqi]);
 
-  const showWards = currentZoom >= 11;
-  const showDistricts = currentZoom >= 9;
-  const geoData = showWards ? wardsGeo : (showDistricts ? districtsGeo : provincesGeo);
+  const showWards = currentZoom >= WARD_ZOOM;
+  const geoData = showWards ? wardsGeo : provincesGeo;
 
   return (
     <motion.div
@@ -324,23 +246,9 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
           <p className="text-xs text-muted-foreground mt-0.5">
           {viewMode === 'heatmap' ? 'Bản đồ nhiệt theo mức độ ô nhiễm' :
             viewMode === 'stations' ? 'Nhấn vào trạm để xem chi tiết' : (
-              showWards ? 'Hiện ranh giới phường/xã' : (showDistricts ? 'Hiện ranh giới quận/huyện — zoom vào để xem phường/xã' : 'Hiện ranh giới tỉnh/thành phố — zoom vào để xem chi tiết hơn')
+              showWards ? 'Hiện ranh giới phường/xã (sau sáp nhập 2025)' : 'Hiện ranh giới tỉnh/thành phố — zoom vào để xem phường/xã'
             )}
           </p>
-          {viewMode === 'stations' && gridPoints.length > 0 && (
-            <p
-              className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground cursor-help"
-              title={
-                'Khu vực không có trạm quan trắc vẫn hiển thị AQI nhờ dữ liệu mô hình ' +
-                'CAMS (Copernicus Atmosphere Monitoring Service) qua Open-Meteo, ' +
-                'kết hợp nội suy IDW từ các trạm thật gần nhất. ' +
-                'Độ tin cậy: 🟢 có trạm gần · 🟡 kết hợp trạm + mô hình · 🟠 chỉ mô hình.'
-              }
-            >
-              <Info className="w-3 h-3" />
-              Tại sao có dữ liệu dù không có trạm?
-            </p>
-          )}
         </div>
         <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
           <button
@@ -388,13 +296,8 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
 
           {viewMode === 'heatmap' && (
             <>
-              {/* WAQI tile layer — pre-rendered AQI heatmap toàn cầu, look-and-feel giống IQAir. */}
-              <TileLayer
-                url={WAQI_TILE_URL}
-                opacity={0.6}
-                attribution='Air Quality Tiles © <a href="https://waqi.info">waqi.info</a>'
-                zIndex={400}
-              />
+              {/* Heatmap nội suy IDW từ trạm thật (dữ liệu DB) — không gọi API ngoài. */}
+              <AQIInterpolationLayer stations={mappableStations} />
               {/* Vẫn hiển thị marker trạm thật (nhỏ hơn) để user click xem chi tiết */}
               {mappableStations.map((station) => (
                 <CircleMarker
@@ -423,66 +326,6 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
               ))}
             </>
           )}
-
-          {/* Lưới AQI từ Open-Meteo (CAMS) — phủ toàn VN cho các khu vực không có trạm thật.
-              Hiển thị mờ ở mode "Trạm" để trạm thật vẫn nổi bật;
-              ẩn hoàn toàn ở mode "Nhiệt" vì WAQI tile đã cover. */}
-          {viewMode === 'stations' && gridPoints.map((g) => (
-            <CircleMarker
-              key={`grid-${g.id}`}
-              center={[g.lat, g.lng]}
-              radius={5}
-              pathOptions={{
-                fillColor: getAqiColor(g.aqi),
-                fillOpacity: 0.5,
-                color: getAqiColor(g.aqi),
-                weight: 1,
-                opacity: 0.4,
-              }}
-            >
-              <Popup>
-                <div className="text-xs min-w-[160px]">
-                  <p className="font-semibold text-[12px]">{g.province_name ?? 'Khu vực'}</p>
-                  <div
-                    className="mt-1.5 rounded px-2 py-1 inline-flex items-baseline gap-1.5"
-                    style={{ backgroundColor: getAqiColor(g.aqi), color: '#fff' }}
-                  >
-                    <span className="text-base font-black tabular-nums">{g.aqi}</span>
-                    <span className="text-[10px] font-semibold">AQI US</span>
-                  </div>
-                  <div className="mt-1.5 grid grid-cols-2 gap-1 text-[10px]">
-                    <div>
-                      <span className="opacity-60">PM2.5</span>
-                      <br />
-                      <span className="font-medium">{g.pm25?.toFixed(1) ?? '—'} µg/m³</span>
-                    </div>
-                    <div>
-                      <span className="opacity-60">PM10</span>
-                      <br />
-                      <span className="font-medium">{g.pm10?.toFixed(1) ?? '—'} µg/m³</span>
-                    </div>
-                  </div>
-                  {(() => {
-                    const conf = g.confidence_score ?? 0;
-                    const fused = g.source_code === 'fused';
-                    const label = fused && conf >= 0.8
-                      ? { dot: '🟢', text: 'Có trạm thật gần — độ tin cậy cao' }
-                      : fused
-                        ? { dot: '🟡', text: 'Kết hợp trạm thật + mô hình CAMS' }
-                        : { dot: '🟠', text: 'Mô hình CAMS — không có trạm gần' };
-                    return (
-                      <div className="mt-1.5 text-[10px]">
-                        <span className="font-medium">{label.dot} {label.text}</span>
-                        <span className="opacity-60">
-                          {' '}· tin cậy {Math.round(conf * 100)}%
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))}
 
           {viewMode === 'stations' && mappableStations.map((station) => {
             const isSelected = station.id === selectedStation?.id;
@@ -537,7 +380,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
 
           {viewMode === 'regions' && geoData && (
             <GeoJSON
-              key={`geo-${showWards ? 'wards' : showDistricts ? 'districts' : 'provinces'}-${mappableStations.length}`}
+              key={`geo-${showWards ? 'wards' : 'provinces'}-${mappableStations.length}`}
               data={geoData}
               style={regionStyle}
               onEachFeature={onEachFeature}
