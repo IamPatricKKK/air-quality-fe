@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getStoredSession, signIn, signOut, signUp } from "@/api/auth";
+import { getStoredSession, signIn, signInWithGoogle, signOut, signUp, type SignUpResult } from "@/api/auth";
 import type { AppSession, AppUser, AuthPayload } from "@/types";
 
 interface AuthContextType {
@@ -7,7 +7,8 @@ interface AuthContextType {
   session: AppSession | null;
   loading: boolean;
   signIn: (payload: AuthPayload) => Promise<void>;
-  signUp: (payload: AuthPayload) => Promise<void>;
+  signInWithGoogle: (token: string) => Promise<void>;
+  signUp: (payload: AuthPayload) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
 }
 
@@ -16,7 +17,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   signIn: async () => {},
-  signUp: async () => {},
+  signInWithGoogle: async () => {},
+  signUp: async () => ({ kind: "pending_verification", email: "", message: "" }),
   signOut: async () => {},
 });
 
@@ -40,10 +42,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(result.session);
   };
 
-  const handleSignUp = async (payload: AuthPayload) => {
-    const result = await signUp(payload);
+  const handleSignInWithGoogle = async (token: string) => {
+    const result = await signInWithGoogle(token);
     setUser(result.user);
     setSession(result.session);
+  };
+
+  const handleSignUp = async (payload: AuthPayload): Promise<SignUpResult> => {
+    const result = await signUp(payload);
+    if (result.kind === "session") {
+      setUser(result.user);
+      setSession(result.session);
+    }
+    return result;
   };
 
   const handleSignOut = async () => {
@@ -59,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         loading,
         signIn: handleSignIn,
+        signInWithGoogle: handleSignInWithGoogle,
         signUp: handleSignUp,
         signOut: handleSignOut,
       }}

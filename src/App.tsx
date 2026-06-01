@@ -20,13 +20,21 @@ const Compare = lazy(() => import("@/pages/Compare"));
 const About = lazy(() => import("@/pages/About"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("@/pages/VerifyEmail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient();
 
+/** Connects the realtime socket for logged-in users, app-wide (all routes). */
+function RealtimeBridge() {
+  const { user } = useAuth();
+  useRealtime(Boolean(user));
+  return null;
+}
+
+/** Gates a route behind authentication; sends anonymous users to /auth. */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  useRealtime(Boolean(user));
 
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-foreground">Đang tải...</div>;
@@ -73,17 +81,21 @@ export default function App() {
               <Sonner />
               <InstallPrompt />
               <BrowserRouter>
+                <RealtimeBridge />
                 <Suspense fallback={<RouteSkeleton />}>
                   <Routes>
-                    <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                    <Route path="/stations/:id" element={<ProtectedRoute><StationDetailPage /></ProtectedRoute>} />
+                    {/* Public — duyệt dữ liệu tự do, không cần đăng nhập */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/stations/:id" element={<StationDetailPage />} />
+                    <Route path="/compare" element={<Compare />} />
+                    <Route path="/about" element={<About />} />
+                    {/* Cần đăng nhập — tính năng cá nhân hoá */}
                     <Route path="/settings/alerts" element={<ProtectedRoute><AlertSettings /></ProtectedRoute>} />
                     <Route path="/alerts" element={<ProtectedRoute><AlertHistory /></ProtectedRoute>} />
-                    <Route path="/compare" element={<ProtectedRoute><Compare /></ProtectedRoute>} />
-                    <Route path="/about" element={<About />} />
                     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                     <Route path="/auth/forgot" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
                     <Route path="/auth/reset" element={<AuthRoute><ResetPassword /></AuthRoute>} />
+                    <Route path="/auth/verify" element={<VerifyEmail />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>

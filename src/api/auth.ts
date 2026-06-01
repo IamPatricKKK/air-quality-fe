@@ -9,6 +9,16 @@ interface AuthResponse {
   session: AppSession;
 }
 
+interface PendingVerificationResponse {
+  pending_verification: true;
+  email: string;
+  message: string;
+}
+
+export type SignUpResult =
+  | { kind: "session"; user: AppUser; session: AppSession }
+  | { kind: "pending_verification"; email: string; message: string };
+
 function readStoredSession() {
   const rawUser = localStorage.getItem(USER_KEY);
   const rawSession = localStorage.getItem(SESSION_KEY);
@@ -41,10 +51,45 @@ export async function signIn(payload: AuthPayload) {
   return result;
 }
 
-export async function signUp(payload: AuthPayload) {
-  const result = await airQualityApiRequest<AuthResponse>("/auth/register", {
+export async function signUp(payload: AuthPayload): Promise<SignUpResult> {
+  const result = await airQualityApiRequest<AuthResponse | PendingVerificationResponse>(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if ("pending_verification" in result && result.pending_verification) {
+    return { kind: "pending_verification", email: result.email, message: result.message };
+  }
+
+  const authResult = result as AuthResponse;
+  persistSession(authResult);
+  return { kind: "session", user: authResult.user, session: authResult.session };
+}
+
+export async function verifyEmail(token: string) {
+  return airQualityApiRequest<{ success: boolean }>("/auth/verify-email", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ token }),
+  });
+}
+
+export async function resendVerification(email: string) {
+  return airQualityApiRequest<{ success: boolean; message: string }>(
+    "/auth/resend-verification",
+    {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    },
+  );
+}
+
+export async function signInWithGoogle(token: string, kind: "idToken" | "accessToken" = "accessToken") {
+  const result = await airQualityApiRequest<AuthResponse>("/auth/google", {
+    method: "POST",
+    body: JSON.stringify({ [kind]: token }),
   });
   persistSession(result);
   return result;

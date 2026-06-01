@@ -36,8 +36,42 @@ export async function airQualityApiRequest<T>(path: string, init?: RequestInit):
   });
 
   if (!response.ok) {
-    throw new Error(`Air Quality API request failed: ${response.status}`);
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      // body wasn't JSON
+    }
+    const msg =
+      (payload && typeof payload === "object" && "message" in payload
+        ? String((payload as { message?: unknown }).message ?? "")
+        : "") || `Air Quality API request failed: ${response.status}`;
+    throw new ApiError(msg, response.status, payload);
   }
 
   return response.json() as Promise<T>;
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly payload: unknown,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+
+  get code(): string | undefined {
+    if (this.payload && typeof this.payload === "object") {
+      const m = (this.payload as { message?: unknown }).message;
+      if (m && typeof m === "object" && "code" in m) {
+        return String((m as { code?: unknown }).code ?? "") || undefined;
+      }
+      if ("code" in (this.payload as Record<string, unknown>)) {
+        return String((this.payload as { code?: unknown }).code ?? "") || undefined;
+      }
+    }
+    return undefined;
+  }
 }
