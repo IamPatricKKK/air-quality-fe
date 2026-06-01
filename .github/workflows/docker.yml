@@ -29,10 +29,19 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=sha,prefix=sha-
+            type=raw,value=latest
       - uses: docker/build-push-action@v5
         with:
           context: .
           push: true
+          # Vite bakes these into the bundle at build time. All values are
+          # public client-side config (safe to keep in the workflow).
+          build-args: |
+            VITE_AIR_QUALITY_API_URL=https://api.airquality.info.vn/api/v1
+            VITE_AIR_QUALITY_BE_URL=https://be.airquality.info.vn/api/v1
+            VITE_AIR_QUALITY_ADMIN_URL=https://admin.airquality.info.vn
+            VITE_GOOGLE_CLIENT_ID=610754258197-6r33fbgr0moi633i1rugftv0hs7bgtcp.apps.googleusercontent.com
+            VITE_VAPID_PUBLIC_KEY=BNzeWkIkQW4ztb7BA_AvMMKK5cp9EykQC6PUZt7OhJi00dzdFvByXLNwn1B9GZYvk05vO-ylnMne2XKZATsvGyo
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
