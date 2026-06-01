@@ -41,7 +41,7 @@ jobs:
             VITE_AIR_QUALITY_BE_URL=https://be.airquality.info.vn/api/v1
             VITE_AIR_QUALITY_ADMIN_URL=https://admin.airquality.info.vn
             VITE_GOOGLE_CLIENT_ID=610754258197-6r33fbgr0moi633i1rugftv0hs7bgtcp.apps.googleusercontent.com
-            VITE_VAPID_PUBLIC_KEY=BNzeWkIkQW4ztb7BA_AvMMKK5cp9EykQC6PUZt7OhJi00dzdFvByXLNwn1B9GZYvk05vO-ylnMne2XKZATsvGyo
+            VITE_VAPID_PUBLIC_KEY=BKdiE3uSpaa0TXUuHXH1VYseUfVagbJpegTfs1f2C49z9xycHOMtaQHBEneL0R8Yh_McCkq1-PBPpY60CLGJ5Fc
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
