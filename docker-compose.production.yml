@@ -1,0 +1,20 @@
+# Production compose — chỉ service Frontend (nginx phục vụ bản build).
+
+services:
+  fe:
+    image: ${IMAGE}
+    container_name: airquality-fe
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      airquality_prod:
+        aliases: [fe]
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+networks:
+  airquality_prod:
+    external: true
