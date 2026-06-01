@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
+        env:
+          VITE_AIR_QUALITY_API_URL: https://api.example.com/api/v1
+          VITE_AIR_QUALITY_BE_URL: https://be.example.com/api/v1
+          VITE_AIR_QUALITY_ADMIN_URL: https://admin.example.com
