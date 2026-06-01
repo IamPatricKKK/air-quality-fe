@@ -1,6 +1,7 @@
 import { Wind, Bell, LogOut, User, Settings, MapPin, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -60,7 +61,7 @@ export function Header({ onToggleAlerts, alertsOpen, selectedRegion = '', onRegi
         </div>
         <div>
           <h1 className="text-lg font-display font-bold text-foreground">
-            AirWatch Vietnam
+            Chất Lượng Không Khí Việt Nam
           </h1>
           <p className="text-xs text-muted-foreground">
             Hệ thống theo dõi chất lượng không khí thời gian thực
@@ -102,7 +103,15 @@ export function Header({ onToggleAlerts, alertsOpen, selectedRegion = '', onRegi
         </div>
 
         <button
-          onClick={onToggleAlerts}
+          onClick={() => {
+            if (!user) {
+              toast.info('Đăng nhập để xem thông báo và cảnh báo', {
+                action: { label: 'Đăng nhập', onClick: () => navigate('/auth') },
+              });
+              return;
+            }
+            onToggleAlerts();
+          }}
           className={`relative p-2.5 rounded-lg transition-colors ${
             alertsOpen ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground hover:text-foreground'
           }`}
@@ -116,6 +125,16 @@ export function Header({ onToggleAlerts, alertsOpen, selectedRegion = '', onRegi
         </button>
 
         <ThemeToggle />
+
+        {!user && (
+          <button
+            onClick={() => navigate('/auth')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <User className="w-4 h-4" />
+            Đăng nhập
+          </button>
+        )}
 
         {user && (
           <div className="flex items-center gap-2">

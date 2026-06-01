@@ -66,7 +66,7 @@ self.addEventListener("push", (event: PushEvent) => {
     }
   }
 
-  const title = payload.title ?? "AirWatch Vietnam";
+  const title = payload.title ?? "Chất Lượng Không Khí Việt Nam";
   const body = payload.body ?? "Có cảnh báo chất lượng không khí mới.";
   const url = payload.url ?? (payload.stationId ? `/stations/${payload.stationId}` : "/");
 
@@ -74,7 +74,7 @@ self.addEventListener("push", (event: PushEvent) => {
     body,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
-    tag: payload.tag ?? "airwatch-alert",
+    tag: payload.tag ?? "air-quality-alert",
     data: { url },
     requireInteraction: false,
   });

@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => ({
       injectRegister: false,
       includeAssets: ["favicon.ico", "robots.txt", "icons/apple-touch-icon.png"],
       manifest: {
-        name: "AirWatch Vietnam",
-        short_name: "AirWatch",
+        name: "Chất Lượng Không Khí Việt Nam",
+        short_name: "CLKKVN",
         description:
           "Theo dõi chất lượng không khí thời gian thực tại Việt Nam, cảnh báo và dự báo AQI.",
         lang: "vi",

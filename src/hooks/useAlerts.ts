@@ -13,6 +13,7 @@ import {
   type CreateRulePayload,
   type UpdateRulePayload,
 } from "@/api/alerts";
+import { useAuth } from "@/hooks/useAuth";
 
 export type { AlertRule, Alert, CreateRulePayload, UpdateRulePayload };
 
@@ -61,9 +62,11 @@ export function useAlerts(limit = 50) {
 }
 
 export function useUnreadCount() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ["alerts-unread-count"],
+    queryKey: ["alerts-unread-count", user?.id],
     queryFn: getUnreadCount,
+    enabled: Boolean(user),
     refetchInterval: 30_000,
   });
 }

@@ -84,7 +84,7 @@ export function InstallPrompt() {
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-foreground font-display">
-                  Cài AirWatch lên màn hình chính
+                  Cài ứng dụng lên màn hình chính
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
                   Truy cập nhanh, nhận thông báo và xem dữ liệu khi mất mạng.

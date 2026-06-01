@@ -69,7 +69,7 @@ export default function About() {
           <Wind className="w-10 h-10 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">AirWatch Vietnam</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">Chất Lượng Không Khí Việt Nam</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Hệ thống dashboard theo dõi chất lượng không khí thời gian thực
           </p>
@@ -82,7 +82,7 @@ export default function About() {
       <div className="glass-card p-5 space-y-3">
         <h2 className="text-base font-semibold font-display text-foreground">Giới thiệu</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          AirWatch Vietnam là hệ thống dashboard tổng hợp dữ liệu chất lượng không khí từ 4 nguồn API
+          Chất Lượng Không Khí Việt Nam là hệ thống dashboard tổng hợp dữ liệu chất lượng không khí từ 4 nguồn API
           công cộng (IQAir, OpenWeatherMap, Open-Meteo, WAQI) cho khoảng 42 trạm quan trắc trải khắp
           Việt Nam. Hệ thống tích hợp các kỹ thuật phân tích chuỗi thời gian (Prophet, ARIMA, Linear
           Regression) để dự báo 24 giờ tới, phát hiện bất thường, đánh giá ảnh hưởng sức khoẻ, và gửi

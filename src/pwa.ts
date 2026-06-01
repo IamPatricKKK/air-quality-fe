@@ -16,7 +16,7 @@ export function setupPwa() {
       });
     },
     onOfflineReady() {
-      toast.success("AirWatch sẵn sàng dùng offline", {
+      toast.success("Ứng dụng sẵn sàng dùng offline", {
         description: "Dữ liệu gần nhất sẽ được lưu để xem khi mất mạng.",
       });
     },

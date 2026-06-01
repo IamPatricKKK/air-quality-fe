@@ -34,5 +34,7 @@ export function useStationAnalytics(stationId: string | undefined) {
     },
     enabled: Boolean(stationId),
     refetchInterval: 5 * 60 * 1000,
+    // Đừng retry khi bị rate-limit (429) — retry chỉ làm cạn quota nhanh hơn.
+    retry: (count, err) => !String(err).includes("429") && count < 2,
   });
 }

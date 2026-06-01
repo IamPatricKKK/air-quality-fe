@@ -1,6 +1,6 @@
-# air-quality-fe — AirWatch Vietnam
+# air-quality-fe — Chất Lượng Không Khí Việt Nam
 
-Dashboard người dùng cuối của hệ thống AirWatch Vietnam. Là một Progressive Web App (PWA) viết bằng React 18 + Vite + TypeScript, giao tiếp với `air-quality-api` (NestJS) và `air-quality-be` (FastAPI).
+Dashboard người dùng cuối của hệ thống Chất Lượng Không Khí Việt Nam. Là một Progressive Web App (PWA) viết bằng React 18 + Vite + TypeScript, giao tiếp với `air-quality-api` (NestJS) và `air-quality-be` (FastAPI).
 
 ## Tính năng chính
 
@@ -199,10 +199,10 @@ scripts/
 
 ## PWA & Push Notifications
 
-### Cài AirWatch như app native
+### Cài ứng dụng như app native
 
 1. Mở app trong Chrome/Edge/Safari trên mobile hoặc desktop
-2. Khi banner "Cài AirWatch lên màn hình chính" xuất hiện, bấm **Cài đặt**
+2. Khi banner "Cài ứng dụng lên màn hình chính" xuất hiện, bấm **Cài đặt**
 3. App icon xuất hiện trên home screen, mở ra trong cửa sổ standalone (không có thanh URL)
 
 **iOS Safari** yêu cầu: Safari 16.4+, người dùng phải tự **Share → Add to Home Screen** trước khi nhận được push.
@@ -220,7 +220,7 @@ Trong cài đặt thông báo, có thể bật **Giờ yên tĩnh** (mặc đị
 
 ### PWA Shortcuts
 
-Khi nhấn giữ icon AirWatch trên home screen (Android), hiện 3 shortcut:
+Khi nhấn giữ icon ứng dụng trên home screen (Android), hiện 3 shortcut:
 - **So sánh** → `/compare`
 - **Cảnh báo** → `/settings/alerts`
 - **Lịch sử** → `/alerts`

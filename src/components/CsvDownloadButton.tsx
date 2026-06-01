@@ -47,7 +47,7 @@ export function CsvDownloadButton({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `airwatch-${stationCode ?? stationId}-${hours}h.csv`;
+      a.download = `air-quality-${stationCode ?? stationId}-${hours}h.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();

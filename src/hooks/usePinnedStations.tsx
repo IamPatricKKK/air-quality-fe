@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { getUserPreferences, saveUserPreferences } from "@/api/profile";
 import { useAuth } from "@/hooks/useAuth";
 
 export function usePinnedStations() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -19,6 +22,10 @@ export function usePinnedStations() {
 
   const togglePin = useCallback(async (stationId: string) => {
     if (!user) {
+      toast.info("Đăng nhập để ghim địa điểm yêu thích", {
+        description: "Ghim trạm giúp bạn theo dõi nhanh các khu vực quan tâm.",
+        action: { label: "Đăng nhập", onClick: () => navigate("/auth") },
+      });
       return;
     }
 
@@ -28,7 +35,7 @@ export function usePinnedStations() {
 
     setPinnedIds(next);
     await saveUserPreferences(user.id, { pinnedStationIds: next });
-  }, [pinnedIds, user]);
+  }, [pinnedIds, user, navigate]);
 
   const isPinned = useCallback((stationId: string) => pinnedIds.includes(stationId), [pinnedIds]);
 

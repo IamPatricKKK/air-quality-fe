@@ -11,7 +11,7 @@ function fmt(v: number | null | undefined, digits = 0) {
 }
 
 export function StationAnalyticsPanel({ stationId }: Props) {
-  const { data, isLoading, isError } = useStationAnalytics(stationId);
+  const { data, isLoading, isError, error } = useStationAnalytics(stationId);
 
   if (!stationId) return null;
   if (isLoading) {
@@ -22,9 +22,12 @@ export function StationAnalyticsPanel({ stationId }: Props) {
     );
   }
   if (isError || !data) {
+    const rateLimited = String(error ?? "").includes("429");
     return (
       <div className="rounded-lg border bg-card p-4 text-sm text-destructive">
-        Không tải được dữ liệu phân tích cho trạm này.
+        {rateLimited
+          ? "Hệ thống đang giới hạn truy cập tạm thời, vui lòng thử lại sau ít phút."
+          : "Không tải được dữ liệu phân tích cho trạm này."}
       </div>
     );
   }

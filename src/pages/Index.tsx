@@ -163,7 +163,7 @@ const Index = () => {
               </svg>
             </div>
             <div className="flex-1">
-              <h1 className="text-sm font-display font-bold text-foreground">AirWatch Vietnam</h1>
+              <h1 className="text-sm font-display font-bold text-foreground">Chất Lượng Không Khí Việt Nam</h1>
               <p className="text-[10px] text-muted-foreground">Chất lượng không khí thời gian thực</p>
             </div>
             <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-medium">
