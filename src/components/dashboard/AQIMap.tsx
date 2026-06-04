@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap, GeoJSON, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
 import L from 'leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
 import { AQIInterpolationLayer } from './AQIInterpolationLayer';
 import { getAqiColor, getAqiLabel, getAqiCategory } from '@/lib/aqi';
@@ -30,7 +33,7 @@ function getAQIColorForRegion(aqi: number): string {
   return getAqiColor(aqi);
 }
 
-function FlyToStation({ station, stations }: { station: Station | null; stations: Station[] }) {
+function FlyToStation({ station, stations, forceFly }: { station: Station | null; stations: Station[]; forceFly?: boolean }) {
   const map = useMap();
   const hasInitializedView = useRef(false);
   const lastStationId = useRef<string | null>(null);
@@ -58,13 +61,31 @@ function FlyToStation({ station, stations }: { station: Station | null; stations
       return;
     }
 
-    if (!station || lastStationId.current === station.id) {
+    if (!station) return;
+
+    if (lastStationId.current === station.id && !forceFly) {
       return;
     }
 
     lastStationId.current = station.id;
     map.flyTo([station.lat, station.lng], Math.max(map.getZoom(), 10), { duration: 1.2 });
-  }, [map, station, stations]);
+
+    // Auto-open popup after fly animation completes
+    if (forceFly) {
+      const openPopup = () => {
+        map.eachLayer((layer: any) => {
+          if (layer.getLatLng) {
+            const ll = layer.getLatLng();
+            if (Math.abs(ll.lat - station.lat) < 0.001 && Math.abs(ll.lng - station.lng) < 0.001) {
+              layer.openPopup();
+            }
+          }
+        });
+        map.off('moveend', openPopup);
+      };
+      map.on('moveend', openPopup);
+    }
+  }, [map, station, stations, forceFly]);
   return null;
 }
 
@@ -105,9 +126,10 @@ interface AQIMapProps {
   stations: Station[];
   selectedStation: Station | null;
   onSelectStation: (station: Station) => void;
+  forceFly?: boolean;
 }
 
-export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapProps) {
+export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }: AQIMapProps) {
   const { resolvedTheme } = useTheme();
   const tileUrl = resolvedTheme === 'dark' ? TILE_DARK : TILE_LIGHT;
   const [viewMode, setViewMode] = useState<MapViewMode>('stations');
@@ -198,6 +220,20 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
     };
   }, [getRegionAqi, resolvedTheme]);
 
+  const heatmapStyle = useCallback((feature: Feature | undefined): PathOptions => {
+    if (!feature) return {};
+    const aqi = getRegionAqi(feature);
+    const color = aqi >= 0 ? getAQIColorForRegion(aqi) : 'transparent';
+
+    return {
+      fillColor: color,
+      fillOpacity: aqi >= 0 ? 0.45 : 0,
+      color: 'transparent',
+      weight: 0,
+      fillRule: 'nonzero',
+    };
+  }, [getRegionAqi]);
+
   const onEachFeature = useCallback((feature: Feature, layer: Layer) => {
     const layerOptions = (layer as any).options;
     if (layerOptions) {
@@ -240,17 +276,17 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
       transition={{ delay: 0.2 }}
       className="glass-card overflow-hidden h-full"
     >
-      <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold font-display text-foreground">Bản đồ chất lượng không khí</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-[10px] text-muted-foreground mt-0.5">
           {viewMode === 'heatmap' ? 'Bản đồ nhiệt theo mức độ ô nhiễm' :
             viewMode === 'stations' ? 'Nhấn vào trạm để xem chi tiết' : (
-              showWards ? 'Hiện ranh giới phường/xã (sau sáp nhập 2025)' : 'Hiện ranh giới tỉnh/thành phố — zoom vào để xem phường/xã'
+              showWards ? 'Ranh giới phường/xã (sau sáp nhập 2025)' : 'Ranh giới tỉnh/thành phố — zoom vào xem phường/xã'
             )}
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
+        <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5 self-start sm:self-auto flex-shrink-0">
           <button
             onClick={() => setViewMode('stations')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
@@ -260,7 +296,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
             <Radio className="w-3.5 h-3.5" />
             Trạm
           </button>
-          <button
+          {/* <button
             onClick={() => setViewMode('heatmap')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
               viewMode === 'heatmap' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -268,8 +304,8 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
           >
             <Flame className="w-3.5 h-3.5" />
             Nhiệt
-          </button>
-          <button
+          </button> */}
+<button
             onClick={() => setViewMode('regions')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
               viewMode === 'regions' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -291,24 +327,29 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
           scrollWheelZoom={false}
         >
           <TileLayer key={tileUrl} url={tileUrl} />
-          <FlyToStation station={selectedStation} stations={mappableStations} />
+          <FlyToStation station={selectedStation} stations={mappableStations} forceFly={forceFly} />
           <ZoomWatcher onZoomChange={setCurrentZoom} />
 
           {viewMode === 'heatmap' && (
             <>
-              {/* Heatmap nội suy IDW từ trạm thật (dữ liệu DB) — không gọi API ngoài. */}
-              <AQIInterpolationLayer stations={mappableStations} />
-              {/* Vẫn hiển thị marker trạm thật (nhỏ hơn) để user click xem chi tiết */}
+              {geoData && (
+                <GeoJSON
+                  key={`heatmap-${showWards ? 'wards' : 'provinces'}-${mappableStations.length}`}
+                  data={geoData}
+                  style={heatmapStyle}
+                  onEachFeature={onEachFeature}
+                />
+              )}
               {mappableStations.map((station) => (
                 <CircleMarker
                   key={`heat-marker-${station.id}`}
                   center={[station.lat, station.lng]}
-                  radius={6}
+                  radius={5}
                   pathOptions={{
                     fillColor: getMarkerColor(station.aqi),
-                    fillOpacity: 1,
+                    fillOpacity: 0.9,
                     color: '#fff',
-                    weight: 2,
+                    weight: 1.5,
                   }}
                   eventHandlers={{
                     click: () => onSelectStation(station),
@@ -327,56 +368,82 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
             </>
           )}
 
-          {viewMode === 'stations' && mappableStations.map((station) => {
-            const isSelected = station.id === selectedStation?.id;
-            const category = getAqiCategory(station.aqi);
-            return (
-              <Marker
-                key={station.id}
-                position={[station.lat, station.lng]}
-                icon={createAqiPinIcon(station.aqi, isSelected)}
-                eventHandlers={{
-                  click: () => onSelectStation(station),
-                }}
-              >
-                <Popup>
-                  <div className="text-sm min-w-[180px]">
-                    <p className="font-bold text-[13px] leading-tight">{station.name}</p>
-                    <p className="text-[11px] opacity-70 mt-0.5">{station.region}</p>
-                    <div
-                      className="mt-2 rounded-md px-2 py-1.5"
-                      style={{
-                        backgroundColor: category.color,
-                        color: category.textColor,
-                      }}
-                    >
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-xl font-black tabular-nums leading-none">
-                          {station.aqi}
-                        </span>
-                        <span className="text-[11px] font-semibold uppercase tracking-wide">
-                          AQI US
-                        </span>
+          {viewMode === 'stations' && (
+            <MarkerClusterGroup
+              maxClusterRadius={25}
+              disableClusteringAtZoom={8}
+              spiderfyOnMaxZoom
+              showCoverageOnHover={false}
+              iconCreateFunction={(cluster: any) => {
+                const markers = cluster.getAllChildMarkers();
+                const worstAqi = Math.max(...markers.map((m: any) => {
+                  const s = mappableStations.find(
+                    st => Math.abs(st.lat - m.getLatLng().lat) < 0.001 && Math.abs(st.lng - m.getLatLng().lng) < 0.001
+                  );
+                  return s?.aqi ?? 0;
+                }));
+                const color = getAqiColor(worstAqi);
+                const count = cluster.getChildCount();
+                return L.divIcon({
+                  html: `<div style="background:${color};color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid rgba(255,255,255,0.6);box-shadow:0 2px 6px rgba(0,0,0,0.3);">${count}</div>`,
+                  className: '',
+                  iconSize: L.point(36, 36),
+                  iconAnchor: L.point(18, 18),
+                });
+              }}
+            >
+              {mappableStations.map((station) => {
+                const isSelected = station.id === selectedStation?.id;
+                const category = getAqiCategory(station.aqi);
+                return (
+                  <Marker
+                    key={station.id}
+                    position={[station.lat, station.lng]}
+                    icon={createAqiPinIcon(station.aqi, isSelected)}
+                    eventHandlers={{
+                      click: () => onSelectStation(station),
+                    }}
+                  >
+                    <Popup>
+                      <div className="text-sm min-w-[180px]">
+                        <p className="font-bold text-[13px] leading-tight">{station.name}</p>
+                        <p className="text-[11px] opacity-70 mt-0.5">{station.region}</p>
+                        <div
+                          className="mt-2 rounded-md px-2 py-1.5"
+                          style={{
+                            backgroundColor: category.color,
+                            color: category.textColor,
+                          }}
+                        >
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-xl font-black tabular-nums leading-none">
+                              {station.aqi}
+                            </span>
+                            <span className="text-[11px] font-semibold uppercase tracking-wide">
+                              AQI US
+                            </span>
+                          </div>
+                          <p className="text-[11px] font-medium mt-0.5">{category.label}</p>
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-1 text-[11px]">
+                          <div>
+                            <span className="opacity-60">PM2.5</span>
+                            <br />
+                            <span className="font-medium">{station.pm25 ?? '—'} µg/m³</span>
+                          </div>
+                          <div>
+                            <span className="opacity-60">PM10</span>
+                            <br />
+                            <span className="font-medium">{station.pm10 ?? '—'} µg/m³</span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-[11px] font-medium mt-0.5">{category.label}</p>
-                    </div>
-                    <div className="mt-2 grid grid-cols-2 gap-1 text-[11px]">
-                      <div>
-                        <span className="opacity-60">PM2.5</span>
-                        <br />
-                        <span className="font-medium">{station.pm25 ?? '—'} µg/m³</span>
-                      </div>
-                      <div>
-                        <span className="opacity-60">PM10</span>
-                        <br />
-                        <span className="font-medium">{station.pm10 ?? '—'} µg/m³</span>
-                      </div>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MarkerClusterGroup>
+          )}
 
           {viewMode === 'regions' && geoData && (
             <GeoJSON
@@ -387,30 +454,6 @@ export function AQIMap({ stations, selectedStation, onSelectStation }: AQIMapPro
             />
           )}
 
-          {/* Show station markers on top of regions too, but smaller */}
-          {viewMode === 'regions' && mappableStations.map((station) => (
-            <CircleMarker
-              key={`region-marker-${station.id}`}
-              center={[station.lat, station.lng]}
-              radius={5}
-              pathOptions={{
-                fillColor: getMarkerColor(station.aqi),
-                fillOpacity: 0.9,
-                color: '#fff',
-                weight: 1,
-              }}
-              eventHandlers={{
-                click: () => onSelectStation(station),
-              }}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-bold">{station.name}</p>
-                  <p style={{ color: getMarkerColor(station.aqi), fontWeight: 'bold' }}>AQI: {station.aqi}</p>
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))}
         </MapContainer>
         <AQILegend />
       </div>

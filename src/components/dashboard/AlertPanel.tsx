@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, AlertCircle, XCircle, X, CheckCheck, Settings, Bell } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAlerts, useUnreadCount, useMarkAlertRead, useMarkAllRead } from "@/hooks/useAlerts";
 import { getAqiCategoryByCode } from "@/lib/aqi";
 
@@ -9,6 +9,8 @@ interface AlertPanelProps {
   onClose: () => void;
   /** Legacy prop — ignored now; panel fetches its own data. */
   notifications?: unknown[];
+  /** Render inline (mobile) instead of fixed slide-out (desktop). */
+  inline?: boolean;
 }
 
 function getAlertLevel(category: string | null) {
@@ -36,7 +38,8 @@ const iconStyleMap = {
   critical: "text-destructive",
 };
 
-export function AlertPanel({ open, onClose }: AlertPanelProps) {
+export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
+  const navigate = useNavigate();
   const { data: alerts = [] } = useAlerts();
   const { data: unread } = useUnreadCount();
   const markRead = useMarkAlertRead();
@@ -48,11 +51,14 @@ export function AlertPanel({ open, onClose }: AlertPanelProps) {
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ x: 320, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 320, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed right-0 top-0 h-full w-80 bg-card border-l border-border z-50 flex flex-col shadow-2xl"
+          initial={inline ? { opacity: 0 } : { x: 320, opacity: 0 }}
+          animate={inline ? { opacity: 1 } : { x: 0, opacity: 1 }}
+          exit={inline ? { opacity: 0 } : { x: 320, opacity: 0 }}
+          transition={inline ? { duration: 0.2 } : { type: "spring", damping: 25, stiffness: 300 }}
+          className={inline
+            ? "flex flex-col min-h-[50vh]"
+            : "fixed right-0 top-0 h-full w-80 bg-card border-l border-border z-50 flex flex-col shadow-2xl"
+          }
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-border/50">
@@ -72,29 +78,29 @@ export function AlertPanel({ open, onClose }: AlertPanelProps) {
                   <CheckCheck className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
-              <Link
-                to="/settings/alerts"
-                onClick={onClose}
+              <button
+                onClick={() => { onClose(); navigate('/notifications/alerts', { state: { returnTab: 'alerts' } }); }}
                 title="Cài đặt cảnh báo"
                 className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
               >
                 <Settings className="w-4 h-4 text-muted-foreground" />
-              </Link>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
-                <X className="w-4 h-4 text-muted-foreground" />
               </button>
+              {!inline && (
+                <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
             </div>
           </div>
 
           {/* View all link */}
           <div className="px-4 py-2 border-b border-border/30 bg-secondary/30">
-            <Link
-              to="/alerts"
-              onClick={onClose}
-              className="text-xs text-primary hover:underline flex items-center justify-center gap-1"
+            <button
+              onClick={() => { onClose(); navigate('/notifications', { state: { returnTab: 'alerts' } }); }}
+              className="text-xs text-primary hover:underline flex items-center justify-center gap-1 w-full"
             >
               Xem toàn bộ lịch sử →
-            </Link>
+            </button>
           </div>
 
           {/* Alerts list */}
@@ -103,9 +109,9 @@ export function AlertPanel({ open, onClose }: AlertPanelProps) {
               <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 text-xs text-muted-foreground text-center">
                 Chưa có cảnh báo nào.
                 <br />
-                <Link to="/settings/alerts" onClick={onClose} className="text-primary hover:underline mt-1 inline-block">
+                <button onClick={() => { onClose(); navigate('/notifications/alerts', { state: { returnTab: 'alerts' } }); }} className="text-primary hover:underline mt-1 inline-block">
                   Tạo rule cảnh báo
-                </Link>
+                </button>
               </div>
             )}
 
