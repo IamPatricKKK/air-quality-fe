@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, AlertCircle, XCircle, X, CheckCheck, Settings, Bell } from "lucide-react";
+import { AlertTriangle, AlertCircle, XCircle, X, CheckCheck, Settings, Bell, Megaphone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAlerts, useUnreadCount, useMarkAlertRead, useMarkAllRead } from "@/hooks/useAlerts";
+import { useNotifications } from "@/hooks/useNotifications";
 import { getAqiCategoryByCode } from "@/lib/aqi";
 
 interface AlertPanelProps {
@@ -41,11 +42,14 @@ const iconStyleMap = {
 export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
   const navigate = useNavigate();
   const { data: alerts = [] } = useAlerts();
+  const { data: notifications = [] } = useNotifications();
   const { data: unread } = useUnreadCount();
   const markRead = useMarkAlertRead();
   const markAllRead = useMarkAllRead();
 
-  const unreadCount = unread?.count ?? alerts.filter((a) => !a.is_read).length;
+  const unreadAlerts = unread?.count ?? alerts.filter((a) => !a.is_read).length;
+  const unreadNotifs = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = unreadAlerts + unreadNotifs;
 
   return (
     <AnimatePresence>
@@ -64,7 +68,7 @@ export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
           <div className="flex items-center justify-between px-4 py-4 border-b border-border/50">
             <div>
               <h2 className="text-sm font-semibold font-display text-foreground flex items-center gap-1.5">
-                <Bell className="w-4 h-4" /> Cảnh báo
+                <Bell className="w-4 h-4" /> Thông báo
               </h2>
               <p className="text-xs text-muted-foreground">{unreadCount} chưa đọc</p>
             </div>
@@ -103,18 +107,41 @@ export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
             </button>
           </div>
 
-          {/* Alerts list */}
+          {/* Combined list: notifications + alerts */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {alerts.length === 0 && (
-              <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 text-xs text-muted-foreground text-center">
-                Chưa có cảnh báo nào.
-                <br />
-                <button onClick={() => { onClose(); navigate('/notifications/alerts', { state: { returnTab: 'alerts' } }); }} className="text-primary hover:underline mt-1 inline-block">
-                  Tạo rule cảnh báo
-                </button>
-              </div>
-            )}
+            {/* Notifications from admin/system */}
+            {notifications.map((notif, i) => (
+              <motion.div
+                key={`notif-${notif.id}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className={`rounded-lg border p-3 border-primary/30 bg-primary/5 ${
+                  !notif.is_read ? "ring-1 ring-primary/20" : "opacity-60"
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <Megaphone className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-foreground">{notif.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{notif.message}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(notif.created_at).toLocaleString("vi-VN")}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-primary/10 text-primary">
+                        Thông báo
+                      </span>
+                      {!notif.is_read && (
+                        <span className="text-[10px] font-medium text-primary">Mới</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
 
+            {/* Alerts from alert rules */}
             {alerts.map((alert, i) => {
               const level = getAlertLevel(alert.aqi_category);
               const Icon = iconMap[level];
@@ -125,7 +152,7 @@ export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
                   key={alert.id}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  transition={{ delay: (notifications.length + i) * 0.05 }}
                   className={`rounded-lg border p-3 cursor-pointer ${styleMap[level]} ${
                     !alert.is_read ? "ring-1 ring-primary/20" : "opacity-60"
                   }`}
@@ -159,6 +186,16 @@ export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
                 </motion.div>
               );
             })}
+
+            {alerts.length === 0 && notifications.length === 0 && (
+              <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 text-xs text-muted-foreground text-center">
+                Chưa có thông báo nào.
+                <br />
+                <button onClick={() => { onClose(); navigate('/notifications/alerts', { state: { returnTab: 'alerts' } }); }} className="text-primary hover:underline mt-1 inline-block">
+                  Tạo rule cảnh báo
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

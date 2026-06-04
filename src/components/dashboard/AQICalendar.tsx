@@ -80,9 +80,9 @@ export function AQICalendar({ stationId, days = 30 }: AQICalendarProps) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-7 gap-1.5 text-[10px]">
+          <div className="max-w-md mx-auto grid grid-cols-7 gap-1 text-[9px]">
             {["CN", "T2", "T3", "T4", "T5", "T6", "T7"].map((d) => (
-              <div key={d} className="text-center text-muted-foreground font-medium pb-1">
+              <div key={d} className="text-center text-muted-foreground font-medium pb-0.5">
                 {d}
               </div>
             ))}
@@ -105,7 +105,7 @@ export function AQICalendar({ stationId, days = 30 }: AQICalendarProps) {
                         ? `${format(cell.date, "EEEE dd/MM/yyyy", { locale: vi })} — AQI ${cell.avgAqi} (${cat.label})`
                         : `${format(cell.date, "EEEE dd/MM/yyyy", { locale: vi })} — chưa có dữ liệu`
                     }
-                    className="aspect-square rounded-md flex items-center justify-center text-[10px] font-semibold cursor-default hover:ring-2 hover:ring-primary/40 transition-all"
+                    className="aspect-square rounded flex items-center justify-center text-[9px] font-semibold cursor-default hover:ring-2 hover:ring-primary/40 transition-all"
                     style={{
                       backgroundColor: hasData ? cat.color : "hsl(220 14% 18%)",
                       color: hasData ? cat.textColor : "hsl(215 12% 45%)",
@@ -120,27 +120,27 @@ export function AQICalendar({ stationId, days = 30 }: AQICalendarProps) {
           </div>
 
           {stats && (
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-              <div className="rounded-md bg-secondary/50 px-2 py-1.5">
+            <div className="mt-3 max-w-md mx-auto grid grid-cols-4 gap-1.5 text-[10px]">
+              <div className="rounded bg-secondary/50 px-1.5 py-1">
                 <p className="text-muted-foreground">AQI TB</p>
-                <p className="text-foreground font-bold text-sm">{stats.avg}</p>
+                <p className="text-foreground font-bold text-xs">{stats.avg}</p>
               </div>
-              <div className="rounded-md bg-secondary/50 px-2 py-1.5">
-                <p className="text-muted-foreground">Ngày tệ nhất</p>
-                <p className="text-foreground font-bold text-sm">
-                  {stats.worst.avgAqi} <span className="text-[10px] text-muted-foreground">({format(stats.worst.date, "dd/MM")})</span>
+              <div className="rounded bg-secondary/50 px-1.5 py-1">
+                <p className="text-muted-foreground">Tệ nhất</p>
+                <p className="text-foreground font-bold text-xs">
+                  {stats.worst.avgAqi} <span className="text-[9px] text-muted-foreground">({format(stats.worst.date, "dd/MM")})</span>
                 </p>
               </div>
-              <div className="rounded-md bg-secondary/50 px-2 py-1.5">
-                <p className="text-muted-foreground">Ngày tốt nhất</p>
-                <p className="text-foreground font-bold text-sm">
-                  {stats.best.avgAqi} <span className="text-[10px] text-muted-foreground">({format(stats.best.date, "dd/MM")})</span>
+              <div className="rounded bg-secondary/50 px-1.5 py-1">
+                <p className="text-muted-foreground">Tốt nhất</p>
+                <p className="text-foreground font-bold text-xs">
+                  {stats.best.avgAqi} <span className="text-[9px] text-muted-foreground">({format(stats.best.date, "dd/MM")})</span>
                 </p>
               </div>
-              <div className="rounded-md bg-secondary/50 px-2 py-1.5">
-                <p className="text-muted-foreground">Ngày vượt ngưỡng</p>
-                <p className="text-foreground font-bold text-sm">
-                  {stats.unhealthyDays}<span className="text-[10px] text-muted-foreground"> / {stats.totalDays}</span>
+              <div className="rounded bg-secondary/50 px-1.5 py-1">
+                <p className="text-muted-foreground">Vượt ngưỡng</p>
+                <p className="text-foreground font-bold text-xs">
+                  {stats.unhealthyDays}<span className="text-[9px] text-muted-foreground"> / {stats.totalDays}</span>
                 </p>
               </div>
             </div>
