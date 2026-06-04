@@ -31,9 +31,10 @@ export function AQICard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => onClick(station)}
-      className={`glass-card p-4 cursor-pointer hover:border-primary/30 transition-all group relative ${isPinned ? 'ring-1 ring-primary/30' : ''} ${isCompared ? 'ring-1 ring-orange-500/50' : ''}`}
+      className={`glass-card p-4 pt-0 cursor-pointer hover:border-primary/30 transition-all group relative ${isPinned ? 'ring-1 ring-primary/30' : ''} ${isCompared ? 'ring-1 ring-orange-500/50' : ''}`}
     >
-      <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+      {/* Buttons top-right */}
+      <div className="flex justify-end gap-1 mt-1">
         {onToggleCompare && (
           <button
             onClick={(e) => { e.stopPropagation(); onToggleCompare(station.id); }}
@@ -62,15 +63,16 @@ export function AQICard({
         )}
       </div>
 
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1 min-w-0 pr-10">
-          <h3 className="text-sm font-semibold text-foreground truncate">{station.name}</h3>
-          <div className="flex items-center gap-1 mt-1 text-muted-foreground">
-            <MapPin className="w-3 h-3 flex-shrink-0" />
-            <span className="text-xs truncate">{station.region}</span>
-          </div>
+      {/* Name full width */}
+      <h3 className="text-sm font-semibold text-foreground line-clamp-2 mb-2">{station.name}</h3>
+
+      {/* Region + AQI */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1 text-muted-foreground min-w-0 flex-1">
+          <MapPin className="w-3 h-3 flex-shrink-0" />
+          <span className="text-xs line-clamp-1">{station.region}</span>
         </div>
-        <div className={`w-14 h-14 rounded-xl ${bgClass}/20 flex flex-col items-center justify-center flex-shrink-0 ml-2`}>
+        <div className={`flex items-baseline gap-1 flex-shrink-0 ml-2`}>
           <span className={`text-xl font-bold font-display ${colorClass}`}>{station.aqi}</span>
           <span className={`text-[9px] font-medium ${colorClass}`}>AQI</span>
         </div>
