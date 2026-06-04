@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapPin, X, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getUserPreferences, saveUserPreferences } from '@/api/profile';
+import { saveUserPreferences } from '@/api/profile';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/hooks/useAuthModal';
 import { toast } from 'sonner';
 
 interface LocationPromptProps {
@@ -11,26 +12,12 @@ interface LocationPromptProps {
 
 export function LocationPrompt({ onLocationGranted }: LocationPromptProps) {
   const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const checkLocation = async () => {
-      const data = await getUserPreferences(user.id);
-
-      if (!data.location?.lat || !data.location?.lng) {
-        setTimeout(() => setVisible(true), 2000);
-      }
-    };
-    checkLocation();
-  }, [user]);
-
-  const handleAllow = async () => {
-    if (!user) return;
-    setLoading(true);
-
+  /** Get position and optionally save to DB */
+  const fetchAndSaveLocation = useCallback(async () => {
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -40,26 +27,82 @@ export function LocationPrompt({ onLocationGranted }: LocationPromptProps) {
       });
 
       const { latitude: lat, longitude: lng } = position.coords;
-
-      await saveUserPreferences(user.id, {
-        location: { lat, lng },
-      });
-
       onLocationGranted?.(lat, lng);
+
+      // Save to DB if logged in
+      if (user) {
+        await saveUserPreferences(user.id, { location: { lat, lng } }).catch(() => {});
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
+  }, [user, onLocationGranted]);
+
+  useEffect(() => {
+    // Check browser geolocation permission
+    const check = async () => {
+      // Permissions API not available — fall back to prompt
+      if (!navigator.permissions?.query) {
+        setTimeout(() => setVisible(true), 2000);
+        return;
+      }
+
+      try {
+        const status = await navigator.permissions.query({ name: 'geolocation' });
+
+        if (status.state === 'granted') {
+          // Permission already granted — silently get location
+          fetchAndSaveLocation();
+        } else if (status.state === 'prompt') {
+          // Not yet asked — show our custom prompt
+          const dismissed = sessionStorage.getItem('loc_dismissed');
+          if (!dismissed) {
+            setTimeout(() => setVisible(true), 2000);
+          }
+        }
+        // 'denied' — don't show, user blocked it in browser settings
+
+        // Listen for permission changes
+        status.addEventListener('change', () => {
+          if (status.state === 'granted') {
+            setVisible(false);
+            fetchAndSaveLocation();
+          }
+        });
+      } catch {
+        // Fallback for browsers that don't support geolocation permission query
+        setTimeout(() => setVisible(true), 2000);
+      }
+    };
+
+    check();
+  }, [user, fetchAndSaveLocation]);
+
+  const handleAllow = async () => {
+    if (!user) {
+      toast.info('Đăng nhập để lưu vị trí và nhận thông báo khu vực của bạn', {
+        action: { label: 'Đăng nhập', onClick: openAuthModal },
+      });
+      setVisible(false);
+      return;
+    }
+
+    setLoading(true);
+    const ok = await fetchAndSaveLocation();
+    setLoading(false);
+
+    if (ok) {
       toast.success('Đã lưu vị trí! Bạn sẽ nhận thông báo chất lượng không khí hàng ngày.');
       setVisible(false);
-    } catch (err: any) {
-      if (err?.code === 1) {
-        toast.error('Bạn đã từ chối chia sẻ vị trí. Bạn có thể bật lại trong cài đặt trình duyệt.');
-      } else {
-        toast.error('Không thể lấy vị trí. Vui lòng thử lại.');
-      }
-    } finally {
-      setLoading(false);
+    } else {
+      toast.error('Bạn đã từ chối hoặc không thể lấy vị trí. Bạn có thể bật lại trong cài đặt trình duyệt.');
     }
   };
 
   const handleDismiss = () => {
+    sessionStorage.setItem('loc_dismissed', '1');
     setVisible(false);
   };
 

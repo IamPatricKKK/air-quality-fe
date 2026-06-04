@@ -1,5 +1,6 @@
 import { Map, BarChart3, Bell, Search, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export type MobileTab = 'home' | 'map' | 'search' | 'alerts' | 'profile';
 
@@ -13,20 +14,39 @@ const tabs = [
   { id: 'home' as const, icon: BarChart3, label: 'Tổng quan' },
   { id: 'map' as const, icon: Map, label: 'Bản đồ' },
   { id: 'search' as const, icon: Search, label: 'Tra cứu' },
-  { id: 'alerts' as const, icon: Bell, label: 'Cảnh báo' },
-  { id: 'profile' as const, icon: User, label: 'Tài khoản' },
+  { id: 'alerts' as const, icon: Bell, label: 'Cảnh báo', href: '/notifications' },
+  { id: 'profile' as const, icon: User, label: 'Tài khoản', href: '/profile' },
 ];
 
 export function MobileNav({ activeTab, onTabChange, alertCount = 0 }: MobileNavProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isAlertPage = location.pathname.startsWith('/notifications');
+  const currentTab = isAlertPage ? 'alerts' : activeTab;
+
+  const handleTabClick = (tab: typeof tabs[number]) => {
+    if (tab.href) {
+      navigate(tab.href);
+    } else {
+      // If on a different page, go to /home first
+      if (location.pathname !== '/home') {
+        navigate('/home', { state: { tab: tab.id } });
+      } else {
+        onTabChange(tab.id);
+      }
+    }
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border md:hidden safe-area-bottom">
       <div className="flex items-center justify-around px-2 py-1.5">
         {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
+          const isActive = currentTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => handleTabClick(tab)}
               className="relative flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors"
             >
               {isActive && (

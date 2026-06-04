@@ -35,49 +35,30 @@ function interpolateAQIColor(aqi: number): [number, number, number] {
   return AQI_COLOR_STOPS[AQI_COLOR_STOPS.length - 1][1];
 }
 
-function idwInterpolate(
-  lat: number,
-  lng: number,
-  stations: { lat: number; lng: number; aqi: number }[],
-  power: number = 2.5,
-  maxDist: number = 5
-): number | null {
-  let weightedSum = 0;
-  let weightTotal = 0;
-
-  for (const s of stations) {
-    const dlat = lat - s.lat;
-    const dlng = lng - s.lng;
-    const distSq = dlat * dlat + dlng * dlng;
-
-    if (distSq < 0.0001) return s.aqi;
-    
-    const dist = Math.sqrt(distSq);
-    if (dist > maxDist) continue;
-
-    const w = 1 / Math.pow(dist, power);
-    weightedSum += s.aqi * w;
-    weightTotal += w;
-  }
-
-  return weightTotal > 0 ? weightedSum / weightTotal : null;
-}
-
-// Rough Vietnam outline for masking
+// Vietnam bounding polygon (denser points for smoother mask)
 const VN_OUTLINE: [number, number][] = [
-  [23.4, 102.1], [23.3, 103.4], [22.8, 104.4], [22.7, 105.3],
-  [22.0, 105.6], [21.6, 106.6], [21.5, 107.5], [21.2, 107.9],
-  [20.7, 107.0], [20.3, 106.6], [19.9, 105.9], [19.4, 105.7],
-  [18.5, 105.9], [18.0, 106.2], [17.4, 106.5], [16.6, 107.0],
-  [16.1, 108.0], [15.5, 108.5], [14.6, 109.0], [13.8, 109.2],
-  [12.7, 109.4], [11.4, 109.0], [10.6, 108.9], [10.4, 107.3],
-  [10.0, 107.0], [9.8, 106.7], [9.3, 105.2], [8.6, 104.8],
-  [8.8, 104.4], [9.3, 104.9], [9.8, 105.8], [10.3, 106.4],
-  [10.5, 106.8], [11.0, 106.7], [11.4, 106.2], [11.8, 106.0],
-  [12.2, 106.5], [12.9, 107.4], [14.0, 107.7], [14.7, 107.5],
-  [15.6, 107.2], [16.0, 106.7], [16.7, 106.0], [17.4, 105.6],
-  [18.2, 105.0], [19.0, 104.4], [19.8, 104.0], [20.4, 103.6],
-  [21.0, 102.9], [21.5, 102.2], [22.4, 102.0], [23.4, 102.1],
+  [23.39, 102.14], [23.33, 103.42], [22.85, 104.37], [22.70, 105.33],
+  [22.46, 105.58], [22.00, 105.63], [21.73, 106.28], [21.57, 106.65],
+  [21.48, 107.35], [21.27, 107.60], [21.15, 107.95],
+  [20.72, 107.05], [20.35, 106.58], [19.88, 105.95], [19.38, 105.72],
+  [18.85, 105.70], [18.48, 105.88], [18.00, 106.18], [17.38, 106.50],
+  [16.95, 106.75], [16.58, 107.02], [16.08, 108.02], [15.88, 108.28],
+  [15.45, 108.52], [14.98, 108.88], [14.58, 109.00], [13.85, 109.22],
+  [13.38, 109.35], [12.68, 109.38], [11.75, 109.15], [11.38, 109.02],
+  [10.95, 108.95], [10.58, 108.88], [10.42, 107.62], [10.35, 107.28],
+  [10.02, 107.02], [9.85, 106.72], [9.58, 106.25], [9.28, 105.22],
+  [8.65, 104.82],
+  [8.58, 104.68], [8.82, 104.42], [9.25, 104.85], [9.48, 105.18],
+  [9.82, 105.82], [10.05, 106.18], [10.28, 106.42], [10.52, 106.78],
+  [10.85, 106.72], [11.08, 106.58], [11.35, 106.38], [11.58, 106.22],
+  [11.82, 106.02], [12.08, 106.22], [12.25, 106.52], [12.62, 107.05],
+  [12.88, 107.38], [13.48, 107.62], [14.02, 107.72], [14.52, 107.58],
+  [14.98, 107.48], [15.58, 107.22], [15.95, 106.72], [16.38, 106.28],
+  [16.72, 106.02], [17.08, 105.72], [17.42, 105.58], [17.88, 105.18],
+  [18.22, 104.98], [18.68, 104.58], [19.02, 104.42], [19.52, 104.08],
+  [19.82, 103.98], [20.22, 103.68], [20.42, 103.58], [20.82, 103.18],
+  [21.02, 102.88], [21.48, 102.22], [21.98, 102.05], [22.42, 101.98],
+  [23.08, 102.02], [23.39, 102.14],
 ];
 
 function pointInPolygon(lat: number, lng: number): boolean {
@@ -91,6 +72,50 @@ function pointInPolygon(lat: number, lng: number): boolean {
     }
   }
   return inside;
+}
+
+/** Simple box blur on RGBA image data */
+function boxBlur(data: Uint8ClampedArray, w: number, h: number, radius: number) {
+  const tmp = new Uint8ClampedArray(data.length);
+  const d = radius * 2 + 1;
+
+  // Horizontal pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let r = 0, g = 0, b = 0, a = 0, count = 0;
+      for (let dx = -radius; dx <= radius; dx++) {
+        const nx = x + dx;
+        if (nx < 0 || nx >= w) continue;
+        const idx = (y * w + nx) * 4;
+        if (data[idx + 3] === 0) continue;
+        r += data[idx]; g += data[idx + 1]; b += data[idx + 2]; a += data[idx + 3];
+        count++;
+      }
+      const idx = (y * w + x) * 4;
+      if (count > 0) {
+        tmp[idx] = r / count; tmp[idx + 1] = g / count; tmp[idx + 2] = b / count; tmp[idx + 3] = a / count;
+      }
+    }
+  }
+
+  // Vertical pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let r = 0, g = 0, b = 0, a = 0, count = 0;
+      for (let dy = -radius; dy <= radius; dy++) {
+        const ny = y + dy;
+        if (ny < 0 || ny >= h) continue;
+        const idx = (ny * w + x) * 4;
+        if (tmp[idx + 3] === 0) continue;
+        r += tmp[idx]; g += tmp[idx + 1]; b += tmp[idx + 2]; a += tmp[idx + 3];
+        count++;
+      }
+      const idx = (y * w + x) * 4;
+      if (count > 0) {
+        data[idx] = r / count; data[idx + 1] = g / count; data[idx + 2] = b / count; data[idx + 3] = a / count;
+      }
+    }
+  }
 }
 
 interface AQIInterpolationLayerProps {
@@ -134,20 +159,21 @@ export function AQIInterpolationLayer({ stations }: AQIInterpolationLayerProps) 
 
         const size = map.getSize();
         const canvas = this._canvas as HTMLCanvasElement;
-        
-        // Low-res for performance, then upscale
-        const scale = 0.2;
+
+        // Higher resolution for smoother output
+        const zoom = map.getZoom();
+        const scale = zoom >= 8 ? 0.5 : zoom >= 6 ? 0.35 : 0.25;
         const w = Math.ceil(size.x * scale);
         const h = Math.ceil(size.y * scale);
 
-        // Position canvas at the correct map layer offset
         const topLeft = map.containerPointToLayerPoint([0, 0]);
         L.DomUtil.setPosition(canvas, topLeft);
-        
+
         canvas.width = w;
         canvas.height = h;
         canvas.style.width = size.x + 'px';
         canvas.style.height = size.y + 'px';
+        canvas.style.imageRendering = 'auto';
 
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -155,29 +181,39 @@ export function AQIInterpolationLayer({ stations }: AQIInterpolationLayerProps) 
         const imageData = ctx.createImageData(w, h);
         const data = imageData.data;
 
-        const zoom = map.getZoom();
-        const baseOpacity = zoom <= 6 ? 0.5 : zoom <= 8 ? 0.45 : 0.4;
-        const maxDist = zoom <= 6 ? 6 : zoom <= 8 ? 4 : 3;
+        const baseOpacity = 0.45;
+        const power = 2;
+        const maxDist = zoom <= 5 ? 8 : zoom <= 7 ? 5 : 3;
 
         for (let py = 0; py < h; py++) {
           for (let px = 0; px < w; px++) {
-            // Convert canvas pixel to container point, then to latlng
             const containerX = px / scale;
             const containerY = py / scale;
             const latlng = map.containerPointToLatLng(L.point(containerX, containerY));
-            
+
             const lat = latlng.lat;
             const lng = latlng.lng;
 
-            // Quick bounds check
             if (lat < 8 || lat > 24 || lng < 101 || lng > 110) continue;
-
-            // Check Vietnam outline
             if (!pointInPolygon(lat, lng)) continue;
 
-            const aqi = idwInterpolate(lat, lng, stationData, 2.5, maxDist);
-            if (aqi === null) continue;
+            // IDW interpolation
+            let weightedSum = 0;
+            let weightTotal = 0;
+            for (const s of stationData) {
+              const dlat = lat - s.lat;
+              const dlng = lng - s.lng;
+              const distSq = dlat * dlat + dlng * dlng;
+              if (distSq < 0.0001) { weightedSum = s.aqi; weightTotal = 1; break; }
+              const dist = Math.sqrt(distSq);
+              if (dist > maxDist) continue;
+              const w = 1 / Math.pow(dist, power);
+              weightedSum += s.aqi * w;
+              weightTotal += w;
+            }
+            if (weightTotal === 0) continue;
 
+            const aqi = weightedSum / weightTotal;
             const [r, g, b] = interpolateAQIColor(aqi);
             const idx = (py * w + px) * 4;
             data[idx] = r;
@@ -186,6 +222,11 @@ export function AQIInterpolationLayer({ stations }: AQIInterpolationLayerProps) 
             data[idx + 3] = Math.round(baseOpacity * 255);
           }
         }
+
+        // Apply blur for smooth gradient effect
+        const blurRadius = Math.max(1, Math.round(2 * scale));
+        boxBlur(data, w, h, blurRadius);
+        boxBlur(data, w, h, blurRadius);
 
         ctx.putImageData(imageData, 0, 0);
       },

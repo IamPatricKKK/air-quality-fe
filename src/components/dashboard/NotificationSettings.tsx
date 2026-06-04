@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getUserPreferences, saveUserPreferences } from '@/api/profile';
 import { useAuth } from '@/hooks/useAuth';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -42,24 +42,43 @@ export function NotificationSettings() {
     return (h ?? 0) * 60 + (m ?? 0);
   };
 
-  const handleSave = async () => {
-    if (!user) return;
-    setSaving(true);
-    try {
-      await saveUserPreferences(user.id, {
-        notificationMode: mode,
-        favoriteRegions: selectedRegions,
-        quietHoursEnabled: quietEnabled,
-        quietHoursStartMin: timeToMinutes(quietStart),
-        quietHoursEndMin: timeToMinutes(quietEnd),
-      });
-      toast.success('Đã lưu cài đặt thông báo');
-    } catch {
-      toast.error('Lỗi khi lưu cài đặt');
-    } finally {
-      setSaving(false);
+  // Auto-save on change (debounced)
+  const initialized = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const autoSave = useCallback(() => {
+    if (!user || !initialized.current) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await saveUserPreferences(user.id, {
+          notificationMode: mode,
+          favoriteRegions: selectedRegions,
+          quietHoursEnabled: quietEnabled,
+          quietHoursStartMin: timeToMinutes(quietStart),
+          quietHoursEndMin: timeToMinutes(quietEnd),
+        });
+        toast.success('Đã lưu cài đặt', { duration: 1500 });
+      } catch {
+        toast.error('Lỗi khi lưu cài đặt');
+      } finally {
+        setSaving(false);
+      }
+    }, 600);
+  }, [user, mode, selectedRegions, quietEnabled, quietStart, quietEnd]);
+
+  useEffect(() => {
+    if (initialized.current) autoSave();
+  }, [mode, selectedRegions, quietEnabled, quietStart, quietEnd, autoSave]);
+
+  // Mark initialized after first load
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => { initialized.current = true; }, 500);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [user]);
 
   const toggleRegion = (region: string) => {
     setSelectedRegions(prev =>
@@ -227,13 +246,9 @@ export function NotificationSettings() {
           )}
         </div>
 
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-        >
-          {saving ? 'Đang lưu...' : 'Lưu cài đặt'}
-        </button>
+        {saving && (
+          <p className="text-[10px] text-muted-foreground text-center animate-pulse">Đang lưu...</p>
+        )}
       </div>
     </motion.div>
   );

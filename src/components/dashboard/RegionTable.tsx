@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Station, getAQILevel, getAQILabel, getAQIColorClass, getAQIBgClass } from '@/data/mockData';
 import { getAqiCategory } from '@/lib/aqi';
-import { TrendingUp, TrendingDown, Minus, ArrowUpDown, ArrowUp, ArrowDown, Search, Filter } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ChevronDown } from 'lucide-react';
 
 interface RegionTableProps {
   stations?: Station[];
@@ -17,6 +17,7 @@ export function RegionTable({ stations = [] }: RegionTableProps) {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState<string>('all');
+  const [collapsed, setCollapsed] = useState(false);
 
   const regions = useMemo(() => {
     const r = [...new Set(stations.map(s => s.region))].sort();
@@ -72,15 +73,21 @@ export function RegionTable({ stations = [] }: RegionTableProps) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-border/50">
-        <h2 className="text-sm font-semibold font-display text-foreground">Xếp hạng khu vực</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Sắp xếp theo {sortKey === 'aqi' ? 'AQI' : sortKey === 'pm25' ? 'PM2.5' : sortKey === 'name' ? 'Tên' : sortKey === 'region' ? 'Khu vực' : sortKey === 'temperature' ? 'Nhiệt độ' : 'Độ ẩm'} {sortDir === 'desc' ? 'giảm dần' : 'tăng dần'}
-        </p>
-      </div>
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        className="w-full px-4 py-3 border-b border-border/50 flex items-center justify-between text-left"
+      >
+        <div>
+          <h2 className="text-sm font-semibold font-display text-foreground">Xếp hạng khu vực</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Sắp xếp theo {sortKey === 'aqi' ? 'AQI' : sortKey === 'pm25' ? 'PM2.5' : sortKey === 'name' ? 'Tên' : sortKey === 'region' ? 'Khu vực' : sortKey === 'temperature' ? 'Nhiệt độ' : 'Độ ẩm'} {sortDir === 'desc' ? 'giảm dần' : 'tăng dần'}
+          </p>
+        </div>
+        <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${collapsed ? '' : 'rotate-180'}`} />
+      </button>
 
       {/* Filters */}
-      <div className="px-4 py-2 border-b border-border/30 flex flex-col sm:flex-row gap-2">
+      <div className={`px-4 py-2 border-b border-border/30 flex flex-col sm:flex-row gap-2 ${collapsed ? 'hidden' : ''}`}>
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <input
@@ -104,7 +111,7 @@ export function RegionTable({ stations = [] }: RegionTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className={`overflow-x-auto ${collapsed ? 'hidden' : ''}`}>
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border/50">
