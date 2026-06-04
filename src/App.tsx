@@ -31,6 +31,7 @@ const VerifyEmail = lazy(() => import("@/pages/VerifyEmail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Landing = lazy(() => import("@/pages/Landing"));
 const Profile = lazy(() => import("@/pages/Profile"));
+const ProfileSettings = lazy(() => import("@/pages/ProfileSettings"));
 
 const queryClient = new QueryClient();
 
@@ -182,6 +183,7 @@ export default function App() {
                     <Route path="/about" element={<About />} />
                     {/* Cần đăng nhập — tính năng cá nhân hoá */}
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/profile/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
                     <Route path="/notifications" element={<ProtectedRoute><AlertHistory /></ProtectedRoute>} />
                     <Route path="/notifications/alerts" element={<ProtectedRoute><AlertSettings /></ProtectedRoute>} />
                     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />

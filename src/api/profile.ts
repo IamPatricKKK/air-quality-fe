@@ -14,3 +14,17 @@ export async function saveUserPreferences(userId: string, next: Partial<UserPref
     }),
   });
 }
+
+export async function updateDisplayName(displayName: string) {
+  return airQualityApiRequest<{ displayName: string }>("/users/profile", {
+    method: "PATCH",
+    body: JSON.stringify({ displayName }),
+  });
+}
+
+export async function updatePassword(payload: { currentPassword?: string; newPassword: string }) {
+  return airQualityApiRequest<{ message: string }>("/users/password", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}

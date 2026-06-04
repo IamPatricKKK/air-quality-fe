@@ -57,6 +57,12 @@ export function usePushNotifications() {
     if (!isSupported()) throw new Error("Trình duyệt không hỗ trợ thông báo đẩy");
     if (!VAPID_PUBLIC_KEY) throw new Error("VAPID public key chưa cấu hình");
 
+    // Check if SW is registered
+    const swRegistrations = await navigator.serviceWorker.getRegistrations();
+    if (swRegistrations.length === 0) {
+      throw new Error("Cài app lên home screen để sử dụng thông báo đẩy");
+    }
+
     setBusy(true);
     try {
       const permission = await Notification.requestPermission();

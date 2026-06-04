@@ -32,6 +32,8 @@ export function LocationPrompt({ onLocationGranted }: LocationPromptProps) {
       // Save to DB if logged in
       if (user) {
         await saveUserPreferences(user.id, { location: { lat, lng } }).catch(() => {});
+        // Notify other components (e.g. MobileProfileView) that location was saved.
+        window.dispatchEvent(new CustomEvent('location-saved'));
       }
 
       return true;

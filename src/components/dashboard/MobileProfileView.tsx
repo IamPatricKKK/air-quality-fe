@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/hooks/useAuthModal';
-import { User, Mail, MapPin, LogOut, Moon, Info, LogIn, UserPlus } from 'lucide-react';
+import { User, Mail, MapPin, LogOut, Moon, Info, LogIn, UserPlus, Settings, ChevronRight } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationSettings } from '@/components/dashboard/NotificationSettings';
@@ -18,17 +18,26 @@ export function MobileProfileView() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    getUserPreferences(user.id)
-      .then((prefs) => {
-        if (!cancelled) {
-          setLocationShared(Boolean(prefs.location?.lat && prefs.location?.lng));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLocationShared(false);
-      });
+
+    const fetchLocation = () => {
+      getUserPreferences(user.id)
+        .then((prefs) => {
+          if (!cancelled) {
+            setLocationShared(Boolean(prefs.location?.lat && prefs.location?.lng));
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setLocationShared(false);
+        });
+    };
+
+    fetchLocation();
+
+    // Re-fetch when LocationPrompt successfully saves coordinates.
+    window.addEventListener('location-saved', fetchLocation);
     return () => {
       cancelled = true;
+      window.removeEventListener('location-saved', fetchLocation);
     };
   }, [user]);
 
@@ -116,6 +125,17 @@ export function MobileProfileView() {
           </div>
         </div>
       </motion.div>
+
+      <Link
+        to="/profile/settings"
+        className="glass-card flex items-center justify-between px-4 py-3.5 hover:bg-secondary/20 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <Settings className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm text-foreground">Cài đặt tài khoản</span>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+      </Link>
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}
