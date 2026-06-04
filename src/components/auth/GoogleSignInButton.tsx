@@ -35,11 +35,6 @@ export function GoogleSignInButton({ label = "Đăng nhập bằng Google" }: { 
   const auth = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Hidden entirely when the deployment hasn't configured Google OAuth.
-  if (!GOOGLE_CLIENT_ID) {
-    return null;
-  }
-
   const login = useGoogleLogin({
     flow: "implicit",
     scope: "openid email profile",
@@ -62,6 +57,12 @@ export function GoogleSignInButton({ label = "Đăng nhập bằng Google" }: { 
     },
     onError: () => toast.error("Đăng nhập Google thất bại"),
   });
+
+  // Hidden entirely when the deployment hasn't configured Google OAuth.
+  // Guard placed AFTER all hooks to comply with Rules of Hooks.
+  if (!GOOGLE_CLIENT_ID) {
+    return null;
+  }
 
   return (
     <button
