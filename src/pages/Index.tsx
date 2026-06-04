@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Header } from '@/components/dashboard/Header';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AQISummary } from '@/components/dashboard/AQISummary';
 import { AQICard } from '@/components/dashboard/AQICard';
 import { AQIMap } from '@/components/dashboard/AQIMap';
@@ -20,20 +19,24 @@ import {
 } from '@/components/dashboard/skeletons';
 import { useStations } from '@/hooks/useStations';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useUnreadCount } from '@/hooks/useAlerts';
 import { usePinnedStations } from '@/hooks/usePinnedStations';
 import { useCompareStations } from '@/hooks/useCompareStations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { StationWithReading } from '@/types';
-import { Search, X, GitCompare } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search, X, GitCompare, Info, MapPin } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Logo } from '@/components/Logo';
 import { toast } from 'sonner';
 
 const Index = () => {
   const { data: dbStations, isLoading } = useStations();
   const { data: notifications } = useNotifications();
+  const { data: alertUnread } = useUnreadCount();
   const { pinnedIds, togglePin, isPinned } = usePinnedStations();
   const compare = useCompareStations();
   const isMobile = useIsMobile();
+  const location = useLocation();
 
   const handleToggleCompare = (stationId: string) => {
     const result = compare.toggle(stationId);
@@ -44,6 +47,7 @@ const Index = () => {
     }
   };
   const [selectedStation, setSelectedStation] = useState<StationWithReading | null>(null);
+  const stationPanelRef = useRef<HTMLDivElement>(null);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('home');
   const [cardSearch, setCardSearch] = useState('');
@@ -51,7 +55,7 @@ const Index = () => {
 
   const stations: StationWithReading[] = dbStations ?? [];
 
-  const unreadCount = notifications?.filter(n => !n.is_read).length ?? 0;
+  const unreadCount = alertUnread?.count ?? 0;
 
   // Sort: pinned first, then by AQI desc
   const sortedStations = useMemo(() => {
@@ -104,6 +108,60 @@ const Index = () => {
     });
   }, [stations]);
 
+  // Handle navigation state (viewOnMap, tab)
+  useEffect(() => {
+    const state = location.state as { viewOnMap?: string; tab?: string } | null;
+    if (!state) return;
+
+    if (state.viewOnMap && stations.length) {
+      const target = stations.find(s => s.id === state.viewOnMap);
+      if (target) {
+        setSelectedStation(target);
+        setForceFly(true);
+        setMobileTab('map');
+        setTimeout(() => setForceFly(false), 2000);
+      }
+    }
+
+    if (state.tab) {
+      setMobileTab(state.tab as MobileTab);
+    }
+
+    // Clear state so it doesn't re-trigger
+    window.history.replaceState({}, '');
+  }, [location.state, stations]);
+
+  const handleMobileCardClick = useCallback((station: StationWithReading) => {
+    setSelectedStation(station);
+    setTimeout(() => {
+      stationPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, []);
+
+  const [forceFly, setForceFly] = useState(false);
+
+  const handleViewOnMap = useCallback((station: StationWithReading) => {
+    setSelectedStation(station);
+    setForceFly(true);
+    setMobileTab('map');
+    // Reset after map has time to fly
+    setTimeout(() => setForceFly(false), 2000);
+  }, []);
+
+  const handleMobileTabChange = useCallback((tab: MobileTab) => {
+    setMobileTab(tab);
+  }, []);
+
+  const handleSearchSelect = useCallback((station: StationWithReading) => {
+    setSelectedStation(station);
+    if (isMobile) {
+      setMobileTab('home');
+      setTimeout(() => {
+        stationPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [isMobile]);
+
   if (!selectedStation && stations.length) {
     return null;
   }
@@ -114,7 +172,7 @@ const Index = () => {
         <AQISummarySkeleton />
         <StationCardSkeleton count={5} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 h-[520px]">
+          <div className="lg:col-span-2 h-[75vh] min-h-[520px]">
             <MapSkeleton />
           </div>
           <div className="lg:col-span-1">
@@ -139,36 +197,27 @@ const Index = () => {
     );
   }
 
-  const handleMobileTabChange = (tab: MobileTab) => {
-    if (tab === 'alerts') {
-      setAlertsOpen(true);
-    }
-    setMobileTab(tab);
-  };
-
-  const handleSearchSelect = (station: StationWithReading) => {
-    setSelectedStation(station);
-    if (isMobile) setMobileTab('map');
-  };
-
   // Mobile layout
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background pb-16">
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-              </svg>
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex-1 min-w-0">
+              <Logo size="sm" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-sm font-display font-bold text-foreground">Chất Lượng Không Khí Việt Nam</h1>
-              <p className="text-[10px] text-muted-foreground">Chất lượng không khí thời gian thực</p>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              Live
+            <div className="flex items-center gap-1.5">
+              <Link
+                to="/"
+                className="p-2 rounded-xl bg-secondary/80 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
+                title="Giới thiệu"
+              >
+                <Info className="w-4 h-4" />
+              </Link>
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold tracking-wide">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                LIVE
+              </div>
             </div>
           </div>
         </div>
@@ -176,13 +225,31 @@ const Index = () => {
         <div className="px-3 py-3 space-y-3">
           {mobileTab === 'home' && (
             <>
-              <AQISummary stations={stations} />
+              {/* Intro section */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 p-4">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-8 translate-x-8" />
+                <div className="absolute bottom-0 left-0 w-16 h-16 bg-primary/5 rounded-full translate-y-6 -translate-x-6" />
+                <div className="relative">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-sm font-semibold font-display text-foreground">Khám phá chất lượng không khí</h2>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed pl-8">
+                    Xem AQI, PM2.5 thời gian thực từ 50+ trạm. Nhận dự báo 24h, cảnh báo ô nhiễm và lời khuyên sức khoẻ.
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 {sortedStations.slice(0, 4).map((station, i) => (
                   <AQICard
                     key={station.id}
                     station={station}
-                    onClick={handleSearchSelect}
+                    onClick={handleMobileCardClick}
                     index={i}
                     isPinned={isPinned(station.id)}
                     onTogglePin={togglePin}
@@ -191,7 +258,15 @@ const Index = () => {
                   />
                 ))}
               </div>
-              {selectedStation && <SelectedStationPanel station={selectedStation} />}
+              {selectedStation && (
+                <div ref={stationPanelRef} className="scroll-mt-16">
+                  <SelectedStationPanel
+                    station={selectedStation}
+                    onViewOnMap={() => handleViewOnMap(selectedStation)}
+                  />
+                </div>
+              )}
+              <AQISummary stations={stations} />
               <RegionTable stations={stations} />
               <WardAqiPanel />
             </>
@@ -203,6 +278,7 @@ const Index = () => {
                 stations={stations}
                 selectedStation={selectedStation}
                 onSelectStation={setSelectedStation}
+                forceFly={forceFly}
               />
             </div>
           )}
@@ -211,7 +287,6 @@ const Index = () => {
             <MobileSearchView stations={stations} onSelectStation={handleSearchSelect} />
           )}
 
-          {mobileTab === 'profile' && <MobileProfileView />}
         </div>
 
         <LocationPrompt />
@@ -220,21 +295,13 @@ const Index = () => {
           onTabChange={handleMobileTabChange}
           alertCount={unreadCount}
         />
-        <AlertPanel open={alertsOpen} onClose={() => setAlertsOpen(false)} />
-        {alertsOpen && (
-          <div
-            className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40"
-            onClick={() => setAlertsOpen(false)}
-          />
-        )}
       </div>
     );
   }
 
   // Desktop layout
   return (
-    <div className="min-h-screen bg-background p-3 md:p-4 lg:p-6 space-y-4">
-      <Header onToggleAlerts={() => setAlertsOpen(!alertsOpen)} alertsOpen={alertsOpen} selectedRegion={selectedRegion} onRegionChange={setSelectedRegion} />
+    <div className="min-h-screen bg-background p-3 md:p-4 lg:p-6 space-y-4 pt-0">
 
       {/* Search bar */}
       <div className="max-w-lg">
@@ -250,7 +317,7 @@ const Index = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Lọc trạm..."
+              placeholder="Tìm trạm..."
               value={cardSearch}
               onChange={e => setCardSearch(e.target.value)}
               className="w-full pl-9 pr-8 py-2 bg-secondary rounded-lg text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition-all"
@@ -281,8 +348,8 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 h-[520px]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:items-start">
+        <div className="lg:col-span-2 lg:sticky lg:top-24 h-[60vh] lg:h-[calc(100vh-7rem)] min-h-[520px]">
           <AQIMap
             stations={stations}
             selectedStation={selectedStation}

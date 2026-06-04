@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { BackButton } from "@/components/BackButton";
 import { ArrowLeft, Plus, Trash2, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
 import {
   useAlertRules,
@@ -65,9 +66,7 @@ export default function AlertSettings() {
 
   return (
     <div className="min-h-screen bg-background p-3 md:p-6 space-y-4 max-w-3xl mx-auto">
-      <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="w-4 h-4" /> Quay lại dashboard
-      </Link>
+      <BackButton />
 
       <div className="flex items-center justify-between">
         <div>

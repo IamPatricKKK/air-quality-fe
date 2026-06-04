@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { BackButton } from "@/components/BackButton";
 import { ArrowLeft, X, GitCompare, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -82,12 +83,7 @@ export default function Compare() {
   return (
     <div className="min-h-screen bg-background p-3 md:p-6 space-y-4 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4" /> Quay lại dashboard
-        </Link>
+        <BackButton />
         {ids.length > 0 && (
           <button
             onClick={clear}

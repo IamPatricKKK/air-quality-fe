@@ -1,5 +1,6 @@
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, MapPin } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { BackButton } from "@/components/BackButton";
+import { ArrowLeft, Loader2, MapPin, Map } from "lucide-react";
 import { format } from "date-fns";
 import { useStations, useStationHistory, useStationAnalytics } from "@/hooks/useStations";
 import { AQIChart } from "@/components/dashboard/AQIChart";
@@ -18,6 +19,7 @@ export default function StationDetailPage() {
   const { data: history } = useStationHistory(id, 24);
   const { data: analytics } = useStationAnalytics(id);
 
+  const navigate = useNavigate();
   const station: StationWithReading | undefined = stations?.find((s) => s.id === id);
   const epa = getAqiCategory(station?.aqi);
 
@@ -33,9 +35,7 @@ export default function StationDetailPage() {
   if (!station) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-4 h-4" /> Quay lại dashboard
-        </Link>
+        <BackButton />
         <div className="mt-8 glass-card p-8 text-center">
           <h1 className="text-xl font-semibold">Không tìm thấy trạm</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -48,9 +48,7 @@ export default function StationDetailPage() {
 
   return (
     <div className="min-h-screen bg-background p-3 md:p-6 space-y-4">
-      <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="w-4 h-4" /> Quay lại dashboard
-      </Link>
+      <BackButton />
 
       <div className="glass-card p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
@@ -85,10 +83,17 @@ export default function StationDetailPage() {
 
       <AQICalendar stationId={station.id} days={30} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AQIChart station={station} />
-        <StationDetail station={station} />
-      </div>
+      <AQIChart station={station} />
+
+      <button
+        onClick={() => navigate('/home', { state: { viewOnMap: station.id } })}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/20 text-primary text-sm font-medium hover:from-primary/20 hover:to-primary/10 active:scale-[0.98] transition-all"
+      >
+        <Map className="w-4 h-4" />
+        Xem trên bản đồ
+      </button>
+
+      <StationDetail station={station} />
 
       {analytics && history && history.length === 0 && (
         <p className="text-xs text-muted-foreground text-center">

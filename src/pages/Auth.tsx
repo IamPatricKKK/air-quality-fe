@@ -26,7 +26,7 @@ const Auth = () => {
       if (isLogin) {
         await auth.signIn({ email, password });
         toast.success('Đăng nhập thành công!');
-        navigate('/');
+        navigate('/home');
       } else {
         const result = await auth.signUp({ email, password, displayName });
         if (result.kind === 'pending_verification') {
@@ -34,7 +34,7 @@ const Auth = () => {
           toast.success(result.message);
         } else {
           toast.success('Đăng ký thành công!');
-          navigate('/');
+          navigate('/home');
         }
       }
     } catch (error: unknown) {

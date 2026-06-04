@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { BackButton } from "@/components/BackButton";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
   AlertCircle,
   XCircle,
-  ArrowLeft,
+  Bell,
   CheckCheck,
   Filter,
   Loader2,
@@ -35,7 +36,7 @@ const COLORS = {
   critical: "text-destructive",
 };
 
-export default function AlertHistory() {
+export default function AlertHistory({ inline }: { inline?: boolean } = {}) {
   const { data: alerts = [], isLoading } = useAlerts(200);
   const { data: unread } = useUnreadCount();
   const markRead = useMarkAlertRead();
@@ -51,37 +52,38 @@ export default function AlertHistory() {
   }, [alerts, filter]);
 
   return (
-    <div className="min-h-screen bg-background p-3 md:p-6 space-y-4 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4" /> Quay lại dashboard
-        </Link>
-        <Link
-          to="/settings/alerts"
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <Settings className="w-3.5 h-3.5" /> Cài đặt rule
-        </Link>
-      </div>
+    <div className={`${inline ? '' : 'min-h-screen pb-20 md:pb-6'} bg-background p-3 md:p-6 space-y-4 max-w-4xl mx-auto`}>
+      {!inline && (
+        <div className="flex items-center justify-between">
+          <BackButton />
+          <Link
+            to="/notifications/alerts"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Settings className="w-3.5 h-3.5" /> Cài đặt rule
+          </Link>
+        </div>
+      )}
 
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-display font-bold text-foreground">Lịch sử cảnh báo</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Tất cả thông báo từ các rule cảnh báo của bạn — {alerts.length} tổng cộng,{" "}
-            {unreadCount} chưa đọc.
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-primary" />
+            <h1 className="text-xl font-display font-bold text-foreground">Thông báo</h1>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+            {alerts.length > 0
+              ? `${alerts.length} thông báo · ${unreadCount} chưa đọc`
+              : 'Chưa có thông báo nào'}
           </p>
         </div>
         {unreadCount > 0 && (
           <button
             onClick={() => markAllRead.mutate()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
           >
             <CheckCheck className="w-3.5 h-3.5" />
-            Đánh dấu đã đọc
+            Đã đọc tất cả
           </button>
         )}
       </div>
@@ -125,7 +127,7 @@ export default function AlertHistory() {
           </p>
           {filter === "all" && (
             <Link
-              to="/settings/alerts"
+              to="/notifications/alerts"
               className="inline-block text-xs text-primary hover:underline"
             >
               Tạo rule cảnh báo →

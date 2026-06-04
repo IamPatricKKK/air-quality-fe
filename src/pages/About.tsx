@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
+import { BackButton } from "@/components/BackButton";
 import {
-  ArrowLeft,
-  Wind,
   Github,
   Mail,
   Code,
@@ -10,6 +9,7 @@ import {
   Layers,
   Globe,
 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 const TECH_STACK = [
   {
@@ -57,26 +57,15 @@ const FEATURES = [
 export default function About() {
   return (
     <div className="min-h-screen bg-background p-3 md:p-6 max-w-4xl mx-auto space-y-6">
-      <Link
-        to="/"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="w-4 h-4" /> Quay lại dashboard
-      </Link>
+      <BackButton />
 
       <div className="glass-card p-6 md:p-8 text-center space-y-4">
-        <div className="w-20 h-20 mx-auto rounded-2xl bg-primary/20 flex items-center justify-center">
-          <Wind className="w-10 h-10 text-primary" />
+        <div className="flex justify-center">
+          <Logo size="lg" />
         </div>
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Chất Lượng Không Khí Việt Nam</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Hệ thống dashboard theo dõi chất lượng không khí thời gian thực
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            Phiên bản 0.1.0 — Đồ án tốt nghiệp 2026
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Phiên bản 0.1.0
+        </p>
       </div>
 
       <div className="glass-card p-5 space-y-3">
