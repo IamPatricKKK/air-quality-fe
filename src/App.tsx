@@ -1,17 +1,24 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useRealtime } from "@/hooks/useRealtime";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Header } from "@/components/dashboard/Header";
+import { Logo } from "@/components/Logo";
+import { MobileNav } from "@/components/dashboard/MobileNav";
+import { useUnreadCount } from "@/hooks/useAlerts";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthModalProvider, useAuthModal } from "@/hooks/useAuthModal";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 const StationDetailPage = lazy(() => import("@/pages/StationDetailPage"));
 const AlertSettings = lazy(() => import("@/pages/AlertSettings"));
@@ -22,6 +29,8 @@ const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("@/pages/VerifyEmail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const Landing = lazy(() => import("@/pages/Landing"));
+const Profile = lazy(() => import("@/pages/Profile"));
 
 const queryClient = new QueryClient();
 
@@ -55,10 +64,86 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
+}
+
+/** Global header — hidden on auth pages. On mobile, hidden on /home (Index has its own mobile header). */
+function GlobalHeader() {
+  const isMobile = useIsMobile();
+  const location = useLocation();
+  const hideOn = ['/auth', '/auth/forgot', '/auth/reset', '/auth/verify'];
+  if (hideOn.some(p => location.pathname.startsWith(p))) return null;
+  // On mobile, /home has its own header
+  if (isMobile && location.pathname === '/home') return null;
+
+  if (isMobile) {
+    return (
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 py-2.5">
+        <Logo size="sm" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="sticky top-0 z-50 px-3 md:px-4 lg:px-6">
+      <HeaderScrollWrapper />
+    </div>
+  );
+}
+
+function HeaderScrollWrapper() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Half viewport height as the transition range
+  const halfScreen = typeof window !== 'undefined' ? window.innerHeight / 2 : 400;
+  const progress = Math.min(1, scrollY / halfScreen);
+  const topPad = 16 * (1 - progress);
+
+  return (
+    <div style={{ paddingTop: topPad }}>
+      <div className={`${progress > 0.05 ? 'bg-background/95 backdrop-blur-xl shadow-sm' : ''} rounded-xl transition-[background-color,box-shadow] duration-200`}>
+        <Header />
+      </div>
+    </div>
+  );
+}
+
+/** Mobile-only bottom nav — shown on all pages except auth and landing. */
+function GlobalMobileNav() {
+  const isMobile = useIsMobile();
+  const location = useLocation();
+  const { data: alertUnread } = useUnreadCount();
+  const hideOn = ['/auth', '/'];
+  const isHidden = !isMobile || hideOn.some(p => location.pathname === p) || location.pathname.startsWith('/auth/') || location.pathname === '/home';
+  if (isHidden) return null;
+
+  // Determine active tab from route
+  const path = location.pathname;
+  const activeTab = path.startsWith('/notification') ? 'alerts' as const
+    : path === '/profile' ? 'profile' as const
+    : 'home' as const;
+
+  return (
+    <MobileNav
+      activeTab={activeTab}
+      onTabChange={() => {}}
+      alertCount={alertUnread?.count ?? 0}
+    />
+  );
+}
+
+function GlobalAuthModal() {
+  const { isOpen, closeAuthModal } = useAuthModal();
+  return <AuthModal open={isOpen} onClose={closeAuthModal} />;
 }
 
 function RouteSkeleton() {
@@ -75,6 +160,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AuthProvider>
+            <AuthModalProvider>
             <TooltipProvider>
               <NetworkStatus />
               <Toaster />
@@ -82,16 +168,22 @@ export default function App() {
               <InstallPrompt />
               <BrowserRouter>
                 <RealtimeBridge />
+                <GlobalAuthModal />
+                <GlobalHeader />
+                <GlobalMobileNav />
                 <Suspense fallback={<RouteSkeleton />}>
                   <Routes>
+                    {/* Landing — trang giới thiệu */}
+                    <Route path="/" element={<Landing />} />
                     {/* Public — duyệt dữ liệu tự do, không cần đăng nhập */}
-                    <Route path="/" element={<Index />} />
+                    <Route path="/home" element={<Index />} />
                     <Route path="/stations/:id" element={<StationDetailPage />} />
                     <Route path="/compare" element={<Compare />} />
                     <Route path="/about" element={<About />} />
                     {/* Cần đăng nhập — tính năng cá nhân hoá */}
-                    <Route path="/settings/alerts" element={<ProtectedRoute><AlertSettings /></ProtectedRoute>} />
-                    <Route path="/alerts" element={<ProtectedRoute><AlertHistory /></ProtectedRoute>} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/notifications" element={<ProtectedRoute><AlertHistory /></ProtectedRoute>} />
+                    <Route path="/notifications/alerts" element={<ProtectedRoute><AlertSettings /></ProtectedRoute>} />
                     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                     <Route path="/auth/forgot" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
                     <Route path="/auth/reset" element={<AuthRoute><ResetPassword /></AuthRoute>} />
@@ -101,6 +193,7 @@ export default function App() {
                 </Suspense>
               </BrowserRouter>
             </TooltipProvider>
+            </AuthModalProvider>
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
