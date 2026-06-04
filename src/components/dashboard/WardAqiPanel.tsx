@@ -53,7 +53,7 @@ export function WardAqiPanel() {
         </h2>
         <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
           <Info className="w-3 h-3" />
-          AQI phân tích từ trạm thật (IDW) cho xã/phường — không phải trạm đo
+          AQI phân tích từ trạm thật (IDW) cho xã/phường, không phải trạm đo.
         </p>
       </div>
 
