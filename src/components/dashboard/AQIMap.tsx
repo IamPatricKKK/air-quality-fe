@@ -92,6 +92,17 @@ function FlyToStation({ station, stations, forceFly }: { station: Station | null
 type MapViewMode = 'stations' | 'regions' | 'heatmap';
 
 
+/** Force map refresh when viewMode changes so layers render immediately */
+function ViewModeRefresh({ viewMode }: { viewMode: string }) {
+  const map = useMap();
+  useEffect(() => {
+    // Small delay to let React unmount/mount layers, then invalidate
+    const timer = setTimeout(() => map.invalidateSize(), 50);
+    return () => clearTimeout(timer);
+  }, [viewMode, map]);
+  return null;
+}
+
 interface ZoomWatcherProps {
   onZoomChange: (zoom: number) => void;
 }
@@ -160,11 +171,37 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
     }
   }, [viewMode, provincesGeo, wardsGeo, currentZoom]);
 
-  // Calculate average AQI for a region by finding nearby stations
+  // Calculate average AQI for a region — match by name first, fallback to nearest station
   const getRegionAqi = useCallback((feature: Feature): number => {
     if (!feature.geometry || !('coordinates' in feature.geometry)) return -1;
 
-    // Get centroid of the polygon (rough estimate)
+    const shapeName = (feature.properties?.shapeName ?? feature.properties?.name ?? '') as string;
+    if (!shapeName) return -1;
+
+    // Normalize name for fuzzy matching (remove "Tỉnh ", "Thành phố ", diacritics-insensitive)
+    const normalize = (s: string) => s
+      .replace(/^(Tỉnh |Thành phố |TP\.?\s*)/i, '')
+      .trim()
+      .toLowerCase();
+
+    const regionNorm = normalize(shapeName);
+
+    // 1. Match stations by name: station.region contains or equals shapeName
+    const nameMatched = mappableStations.filter(s => {
+      const stationRegion = normalize(s.region);
+      // Skip WAQI-XXXX stations for name matching
+      if (s.region.startsWith('WAQI-')) return false;
+      return stationRegion === regionNorm ||
+        stationRegion.includes(regionNorm) ||
+        regionNorm.includes(stationRegion);
+    });
+
+    if (nameMatched.length > 0) {
+      const sum = nameMatched.reduce((acc, s) => acc + s.aqi, 0);
+      return Math.round(sum / nameMatched.length);
+    }
+
+    // 2. Fallback: find closest station within 0.5 degrees (~55km)
     let totalLat = 0, totalLng = 0, count = 0;
     const flattenCoords = (coords: any[]): void => {
       for (const c of coords) {
@@ -183,10 +220,9 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
     const centLat = totalLat / count;
     const centLng = totalLng / count;
 
-    // Find closest station(s) within 1 degree (~100km)
     const nearby = mappableStations.filter(s => {
       const dist = Math.sqrt((s.lat - centLat) ** 2 + (s.lng - centLng) ** 2);
-      return dist < 1.5;
+      return dist < 0.5;
     });
 
     if (nearby.length === 0) return -1;
@@ -329,6 +365,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
           <TileLayer key={tileUrl} url={tileUrl} />
           <FlyToStation station={selectedStation} stations={mappableStations} forceFly={forceFly} />
           <ZoomWatcher onZoomChange={setCurrentZoom} />
+          <ViewModeRefresh viewMode={viewMode} />
 
           {viewMode === 'heatmap' && (
             <>
@@ -370,6 +407,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
 
           {viewMode === 'stations' && (
             <MarkerClusterGroup
+              key={`cluster-${viewMode}`}
               maxClusterRadius={25}
               disableClusteringAtZoom={8}
               spiderfyOnMaxZoom

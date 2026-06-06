@@ -17,12 +17,12 @@ export function AQILegend({ className = '' }: AQILegendProps) {
 
   return (
     <div
-      className={`pointer-events-auto absolute bottom-4 right-4 z-[400] w-[240px] rounded-lg bg-background/95 backdrop-blur-md border border-border shadow-lg ${className}`}
+      className={`pointer-events-auto absolute bottom-4 right-4 z-[400] w-[240px] rounded-2xl bg-card/95 backdrop-blur-md border border-border/60 shadow-xl ${className}`}
     >
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary/50 rounded-t-lg"
+        className="flex w-full items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary/50 rounded-t-2xl"
       >
         <span className="flex items-center gap-1.5">
           <Info className="w-3.5 h-3.5 text-primary" />

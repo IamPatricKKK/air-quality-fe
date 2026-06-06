@@ -145,6 +145,66 @@
     @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl;
   }
 
+  /* ── OpenWeather-inspired primitives (keep AQI palette) ── */
+
+  /* Full-bleed sky gradient hero (sunrise→sky→fade to bg) */
+  .sky-hero {
+    background:
+      radial-gradient(120% 80% at 80% -10%, hsl(28 90% 70% / 0.45) 0%, transparent 45%),
+      linear-gradient(
+        180deg,
+        hsl(205 80% 64%) 0%,
+        hsl(200 70% 72%) 30%,
+        hsl(190 50% 85%) 62%,
+        hsl(var(--background)) 100%
+      );
+  }
+  .dark .sky-hero {
+    background:
+      radial-gradient(120% 80% at 80% -10%, hsl(28 70% 45% / 0.35) 0%, transparent 45%),
+      linear-gradient(
+        180deg,
+        hsl(215 45% 24%) 0%,
+        hsl(212 40% 17%) 45%,
+        hsl(218 32% 12%) 75%,
+        hsl(var(--background)) 100%
+      );
+  }
+
+  /* Soft cream sky for lighter sections */
+  .sky-soft {
+    background: linear-gradient(180deg, hsl(200 60% 92%) 0%, hsl(var(--background)) 60%);
+  }
+  .dark .sky-soft {
+    background: linear-gradient(180deg, hsl(215 35% 15%) 0%, hsl(var(--background)) 60%);
+  }
+
+  /* Elevated rounded card (OpenWeather white/cream, soft shadow) */
+  .ow-card {
+    @apply bg-card rounded-2xl border border-border/40;
+    box-shadow: 0 1px 2px hsl(220 25% 15% / 0.04), 0 12px 30px -16px hsl(220 25% 15% / 0.18);
+  }
+  .dark .ow-card {
+    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.3), 0 16px 36px -18px hsl(0 0% 0% / 0.6);
+  }
+
+  /* Translucent card that floats over the sky hero */
+  .ow-card-glass {
+    @apply rounded-2xl border border-white/30 bg-white/85 backdrop-blur-md;
+    box-shadow: 0 12px 36px -14px hsl(220 40% 25% / 0.35);
+  }
+  .dark .ow-card-glass {
+    @apply border-white/10 bg-card/80;
+  }
+
+  /* Metric tile (icon + label + value) */
+  .ow-tile {
+    @apply rounded-xl bg-secondary/50 border border-border/30 p-3 transition-colors;
+  }
+  .ow-tile:hover {
+    @apply bg-secondary/70;
+  }
+
   .glow-primary {
     box-shadow: var(--glow-primary);
   }

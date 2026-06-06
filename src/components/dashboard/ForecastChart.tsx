@@ -13,7 +13,7 @@ import {
 import { format } from "date-fns";
 import { Loader2, Brain } from "lucide-react";
 import { getLatestForecast, type ForecastLatest } from "@/api/analytics";
-import { aqiReferenceLines } from "@/lib/aqi";
+import { aqiReferenceLines, getAqiCategory } from "@/lib/aqi";
 
 interface Props {
   stationId: string;
@@ -50,12 +50,24 @@ export function ForecastChart({ stationId, metric = "aqi" }: Props) {
   }));
 
   const run = data.run;
+  const isAqi = metric.toLowerCase() === "aqi";
+
+  // Hourly strip (OpenWeather-style) — first ~12 points
+  const hourly = data.points.slice(0, 12).map((p) => {
+    const cat = isAqi ? getAqiCategory(p.predictedValue) : null;
+    return {
+      hour: format(new Date(p.predictedAt), "HH:mm"),
+      day: format(new Date(p.predictedAt), "dd/MM"),
+      value: Math.round(p.predictedValue),
+      color: cat?.color ?? "hsl(var(--primary))",
+    };
+  });
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-4"
+      className="ow-card p-4"
     >
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -76,6 +88,25 @@ export function ForecastChart({ stationId, metric = "aqi" }: Props) {
         )}
       </div>
 
+      {/* Hourly forecast strip */}
+      {hourly.length > 0 && (
+        <div className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto pb-1.5">
+          {hourly.map((h, idx) => (
+            <div
+              key={idx}
+              className="ow-tile flex-shrink-0 w-[58px] !p-2 text-center"
+            >
+              <div className="text-[10px] text-muted-foreground">{h.hour}</div>
+              <div
+                className="mx-auto my-1.5 w-2 h-2 rounded-full"
+                style={{ backgroundColor: h.color }}
+              />
+              <div className="text-sm font-bold font-display text-foreground leading-none">{h.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
@@ -89,26 +120,26 @@ export function ForecastChart({ stationId, metric = "aqi" }: Props) {
                 <stop offset="95%" stopColor="hsl(260 40% 50%)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 14% 18%)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis
               dataKey="time"
-              tick={{ fill: "hsl(215 12% 55%)", fontSize: 9 }}
-              axisLine={{ stroke: "hsl(220 14% 18%)" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }}
+              axisLine={{ stroke: "hsl(var(--border))" }}
               tickLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fill: "hsl(215 12% 55%)", fontSize: 10 }}
-              axisLine={{ stroke: "hsl(220 14% 18%)" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+              axisLine={{ stroke: "hsl(var(--border))" }}
               tickLine={false}
             />
             <Tooltip
               contentStyle={{
-                background: "hsl(220 18% 10%)",
-                border: "1px solid hsl(220 14% 18%)",
+                background: "hsl(var(--popover))",
+                border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
                 fontSize: "12px",
-                color: "hsl(210 20% 92%)",
+                color: "hsl(var(--popover-foreground))",
               }}
             />
             {aqiReferenceLines().map((r) => (

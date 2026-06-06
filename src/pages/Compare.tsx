@@ -107,7 +107,7 @@ export default function Compare() {
       </div>
 
       {selectedStations.length === 0 ? (
-        <div className="glass-card p-8 text-center space-y-3">
+        <div className="ow-card p-8 text-center space-y-3">
           <Info className="w-8 h-8 text-muted-foreground mx-auto" />
           <p className="text-sm text-foreground">Chưa có trạm nào để so sánh.</p>
           <p className="text-xs text-muted-foreground">
@@ -126,7 +126,7 @@ export default function Compare() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="glass-card p-4 relative"
+                  className="ow-card p-4 relative"
                 >
                   <button
                     onClick={() => toggle(station.id)}
@@ -173,7 +173,7 @@ export default function Compare() {
           </div>
 
           {/* Overlay chart */}
-          <div className="glass-card p-4">
+          <div className="ow-card p-4">
             <h2 className="text-sm font-semibold font-display text-foreground mb-1">
               Diễn biến AQI 24 giờ — so sánh
             </h2>
@@ -192,26 +192,26 @@ export default function Compare() {
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 14% 18%)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="time"
-                      tick={{ fill: "hsl(215 12% 55%)", fontSize: 10 }}
-                      axisLine={{ stroke: "hsl(220 14% 18%)" }}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
                       tickLine={false}
                       interval="preserveStartEnd"
                     />
                     <YAxis
-                      tick={{ fill: "hsl(215 12% 55%)", fontSize: 10 }}
-                      axisLine={{ stroke: "hsl(220 14% 18%)" }}
+                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
                       tickLine={false}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(220 18% 10%)",
-                        border: "1px solid hsl(220 14% 18%)",
+                        background: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
                         fontSize: "12px",
-                        color: "hsl(210 20% 92%)",
+                        color: "hsl(var(--popover-foreground))",
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -243,7 +243,7 @@ export default function Compare() {
           </div>
 
           {/* Quick stats table */}
-          <div className="glass-card p-4">
+          <div className="ow-card p-4">
             <h2 className="text-sm font-semibold font-display text-foreground mb-3">
               Chỉ số hiện tại
             </h2>

@@ -31,7 +31,7 @@ export function AQICard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => onClick(station)}
-      className={`glass-card p-4 pt-0 cursor-pointer hover:border-primary/30 transition-all group relative ${isPinned ? 'ring-1 ring-primary/30' : ''} ${isCompared ? 'ring-1 ring-orange-500/50' : ''}`}
+      className={`ow-card p-4 pt-0 cursor-pointer hover:-translate-y-0.5 hover:border-primary/30 transition-all group relative ${isPinned ? 'ring-1 ring-primary/30' : ''} ${isCompared ? 'ring-1 ring-orange-500/50' : ''}`}
     >
       {/* Buttons top-right */}
       <div className="flex justify-end gap-1 mt-1">

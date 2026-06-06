@@ -30,10 +30,12 @@ export function AQISummary({ stations }: AQISummaryProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.08 }}
-          className="glass-card p-4"
+          className="ow-card p-4"
         >
           <div className="flex items-center gap-2 mb-2">
-            <card.icon className={`w-4 h-4 ${card.color}`} />
+            <span className="w-7 h-7 rounded-lg bg-secondary/70 flex items-center justify-center">
+              <card.icon className={`w-4 h-4 ${card.color}`} />
+            </span>
             <span className="text-xs text-muted-foreground">{card.label}</span>
           </div>
           <div className={`text-2xl font-bold font-display ${card.color}`}>{card.value}</div>

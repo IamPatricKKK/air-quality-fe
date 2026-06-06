@@ -48,9 +48,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-primary/5" />
-        <div className="relative max-w-5xl mx-auto px-4 py-16 md:py-24 text-center">
+      <div className="relative overflow-hidden sky-hero">
+        <div className="relative max-w-5xl mx-auto px-4 py-16 md:py-28 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -96,9 +95,9 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.08 }}
-              className="glass-card p-5 space-y-2"
+              className="ow-card p-5 space-y-2 hover:-translate-y-0.5 transition-transform"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <f.icon className="w-5 h-5 text-primary" />
               </div>
               <h3 className="text-sm font-semibold text-foreground">{f.title}</h3>
@@ -110,7 +109,7 @@ export default function Landing() {
 
       {/* CTA bottom */}
       <div className="max-w-5xl mx-auto px-4 pb-16">
-        <div className="glass-card p-6 md:p-8 text-center space-y-4">
+        <div className="ow-card p-6 md:p-8 text-center space-y-4">
           <h2 className="text-lg md:text-xl font-display font-bold text-foreground">
             Bắt đầu theo dõi chất lượng không khí ngay
           </h2>

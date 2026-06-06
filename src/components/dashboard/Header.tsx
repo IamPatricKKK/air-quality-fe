@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { Bell, LogOut, User, Settings, MapPin, ChevronDown, Info } from 'lucide-react';
+import { Bell, LogOut, User, Settings, MapPin, ChevronDown, Info, Shield } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AlertPanel } from '@/components/dashboard/AlertPanel';
@@ -43,8 +43,10 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
   const unreadCount = unreadData?.count ?? notifications?.filter(n => !n.is_read).length ?? 0;
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const regionRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
 
   const isHome = location.pathname === '/home';
 
@@ -53,35 +55,40 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
       if (regionRef.current && !regionRef.current.contains(e.target as Node)) {
         setRegionOpen(false);
       }
+      if (userRef.current && !userRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const currentLabel = REGIONS.find(r => r.value === selectedRegion)?.label || 'Tất cả khu vực';
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
+  const adminUrl = import.meta.env.VITE_AIR_QUALITY_ADMIN_URL;
 
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="glass-card px-6 py-4 flex items-center justify-between"
+      className="glass-card px-4 md:px-6 h-16 flex items-center justify-between"
     >
       <Logo size="md" />
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Region selector — only on /home */}
         {isHome && onRegionChange && (
           <div ref={regionRef} className="relative hidden md:block">
             <button
               onClick={() => setRegionOpen(!regionOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-secondary text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors"
             >
               <MapPin className="w-3.5 h-3.5 text-primary" />
               <span className="max-w-[140px] truncate">{currentLabel}</span>
               <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${regionOpen ? 'rotate-180' : ''}`} />
             </button>
             {regionOpen && (
-              <div className="absolute right-0 mt-1 w-52 bg-popover border border-border rounded-lg shadow-lg z-50 py-1">
+              <div className="absolute right-0 mt-1.5 w-52 bg-popover border border-border rounded-xl shadow-lg z-50 py-1">
                 {REGIONS.map(r => (
                   <button
                     key={r.value}
@@ -98,22 +105,25 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
           </div>
         )}
 
+        {/* Live indicator — only on /home */}
+        {isHome && (
+          <div className="hidden lg:inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary/10 text-primary text-xs font-medium">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            Đang cập nhật trực tiếp
+          </div>
+        )}
+
+        {/* Giới thiệu */}
         <button
           onClick={() => navigate('/')}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-secondary text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           title="Giới thiệu"
         >
           <Info className="w-3.5 h-3.5" />
           Giới thiệu
         </button>
 
-        {isHome && (
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            Đang cập nhật trực tiếp
-          </div>
-        )}
-
+        {/* Notifications */}
         <button
           onClick={() => {
             if (!user) {
@@ -124,13 +134,14 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
             }
             setAlertsOpen(o => !o);
           }}
-          className={`relative p-2.5 rounded-lg transition-colors ${
+          className={`relative inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
             alertsOpen ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground hover:text-foreground'
           }`}
+          title="Thông báo"
         >
-          <Bell className="w-5 h-5" />
+          <Bell className="w-[18px] h-[18px]" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
               {unreadCount}
             </span>
           )}
@@ -141,45 +152,64 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
         {!user && (
           <button
             onClick={openAuthModal}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             <User className="w-4 h-4" />
             Đăng nhập
           </button>
         )}
 
+        {/* User dropdown */}
         {user && (
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  const adminUrl = import.meta.env.VITE_AIR_QUALITY_ADMIN_URL;
-                  if (adminUrl) {
-                    window.location.href = adminUrl;
-                    return;
-                  }
-                  navigate('/home');
-                }}
-                className="p-2.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                title="Admin Panel"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
+          <div ref={userRef} className="relative">
+            <button
+              onClick={() => setUserMenuOpen(o => !o)}
+              className="inline-flex items-center gap-2 h-9 pl-1.5 pr-2.5 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+            >
+              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center">
+                <User className="w-3.5 h-3.5" />
+              </span>
+              <span className="hidden md:block text-sm font-medium truncate max-w-[120px]">{displayName}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {userMenuOpen && (
+              <div className="absolute right-0 mt-1.5 w-56 bg-popover border border-border rounded-xl shadow-lg z-50 py-1.5">
+                <div className="px-3 py-2 mb-1 border-b border-border/60">
+                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </div>
+                <button
+                  onClick={() => { setUserMenuOpen(false); navigate('/profile'); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                >
+                  <User className="w-4 h-4 text-muted-foreground" /> Trang cá nhân
+                </button>
+                <button
+                  onClick={() => { setUserMenuOpen(false); navigate('/profile/settings'); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                >
+                  <Settings className="w-4 h-4 text-muted-foreground" /> Cài đặt tài khoản
+                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      if (adminUrl) { window.location.href = adminUrl; } else { navigate('/home'); }
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                  >
+                    <Shield className="w-4 h-4 text-muted-foreground" /> Trang quản trị
+                  </button>
+                )}
+                <div className="my-1 border-t border-border/60" />
+                <button
+                  onClick={() => { setUserMenuOpen(false); setLogoutConfirm(true); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Đăng xuất
+                </button>
+              </div>
             )}
-            <button
-              onClick={() => navigate('/profile')}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="truncate max-w-[120px]">{user.email}</span>
-            </button>
-            <button
-              onClick={() => setLogoutConfirm(true)}
-              className="p-2.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-              title="Đăng xuất"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
           </div>
         )}
       </div>

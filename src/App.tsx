@@ -89,7 +89,7 @@ function GlobalHeader() {
   }
 
   return (
-    <div className="sticky top-0 z-50 px-3 md:px-4 lg:px-6">
+    <div className="sticky top-0 z-50 px-8 md:px-12 lg:px-18">
       <HeaderScrollWrapper />
     </div>
   );
@@ -159,7 +159,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <AuthProvider>
             <AuthModalProvider>
             <TooltipProvider>

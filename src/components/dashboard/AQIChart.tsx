@@ -25,7 +25,7 @@ export function AQIChart({ station }: AQIChartProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="glass-card p-4"
+      className="ow-card p-4"
     >
       <div className="mb-4 flex items-start justify-between gap-2">
         <div>
@@ -60,26 +60,26 @@ export function AQIChart({ station }: AQIChartProps) {
                   <stop offset="95%" stopColor="hsl(200 70% 55%)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 14% 18%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis
                 dataKey="time"
-                tick={{ fill: 'hsl(215 12% 55%)', fontSize: 10 }}
-                axisLine={{ stroke: 'hsl(220 14% 18%)' }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: 'hsl(215 12% 55%)', fontSize: 10 }}
-                axisLine={{ stroke: 'hsl(220 14% 18%)' }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  background: 'hsl(220 18% 10%)',
-                  border: '1px solid hsl(220 14% 18%)',
+                  background: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
                   fontSize: '12px',
-                  color: 'hsl(210 20% 92%)',
+                  color: 'hsl(var(--popover-foreground))',
                 }}
               />
               {aqiReferenceLines().map((r) => (

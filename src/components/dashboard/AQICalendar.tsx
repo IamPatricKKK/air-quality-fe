@@ -107,8 +107,8 @@ export function AQICalendar({ stationId, days = 30 }: AQICalendarProps) {
                     }
                     className="aspect-square rounded flex items-center justify-center text-[9px] font-semibold cursor-default hover:ring-2 hover:ring-primary/40 transition-all"
                     style={{
-                      backgroundColor: hasData ? cat.color : "hsl(220 14% 18%)",
-                      color: hasData ? cat.textColor : "hsl(215 12% 45%)",
+                      backgroundColor: hasData ? cat.color : "hsl(var(--secondary))",
+                      color: hasData ? cat.textColor : "hsl(var(--muted-foreground))",
                     }}
                   >
                     {hasData ? cell.avgAqi : format(cell.date, "d")}

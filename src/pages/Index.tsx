@@ -226,9 +226,9 @@ const Index = () => {
           {mobileTab === 'home' && (
             <>
               {/* Intro section */}
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 p-4">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-8 translate-x-8" />
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-primary/5 rounded-full translate-y-6 -translate-x-6" />
+              <div className="relative overflow-hidden rounded-2xl sky-hero border border-white/40 dark:border-white/10 p-4 shadow-sm">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/15 rounded-full -translate-y-8 translate-x-8" />
+                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-6 -translate-x-6" />
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -301,12 +301,22 @@ const Index = () => {
 
   // Desktop layout
   return (
-    <div className="min-h-screen bg-background p-3 md:p-4 lg:p-6 space-y-4 pt-0">
+    <div className="min-h-screen bg-background pb-6">
 
-      {/* Search bar */}
-      <div className="max-w-lg">
-        <SearchStation stations={stations} onSelect={setSelectedStation} />
+      {/* Sky hero */}
+      <div className="sky-hero px-3 md:px-4 lg:px-6 pt-6 pb-12">
+        <div className="max-w-2xl">
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
+            Chất lượng không khí Việt Nam
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5 mb-4">
+            Theo dõi AQI &amp; PM2.5 thời gian thực từ 50+ trạm quan trắc trên toàn quốc.
+          </p>
+          <SearchStation stations={stations} onSelect={setSelectedStation} />
+        </div>
       </div>
+
+      <div className="relative -mt-6 px-3 md:px-4 lg:px-6 space-y-4">
 
       <AQISummary stations={stations} />
 
@@ -383,6 +393,7 @@ const Index = () => {
           onClick={() => setAlertsOpen(false)}
         />
       )}
+      </div>
     </div>
   );
 };
