@@ -1,8 +1,10 @@
+import { USE_MOCK, mockApiRequest } from "@/api/mockDb";
+
 const AIR_QUALITY_API_URL = import.meta.env.VITE_AIR_QUALITY_API_URL;
 const SESSION_KEY = "air-quality-fe:user-session";
 
 export function hasAirQualityApi() {
-  return Boolean(AIR_QUALITY_API_URL);
+  return USE_MOCK || Boolean(AIR_QUALITY_API_URL);
 }
 
 function getAuthorizationHeader() {
@@ -20,6 +22,10 @@ function getAuthorizationHeader() {
 }
 
 export async function airQualityApiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  if (USE_MOCK) {
+    return mockApiRequest<T>(path, init);
+  }
+
   if (!AIR_QUALITY_API_URL) {
     throw new Error("Air Quality API is not configured");
   }

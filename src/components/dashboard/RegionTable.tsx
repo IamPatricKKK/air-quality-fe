@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Station, getAQILevel, getAQILabel, getAQIColorClass, getAQIBgClass } from '@/data/mockData';
-import { getAqiCategory } from '@/lib/aqi';
-import { TrendingUp, TrendingDown, Minus, ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ChevronDown } from 'lucide-react';
+import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
+import { getAQIColors } from '@/utils/aqi';
+import { ArrowUpDown, ArrowUp, ArrowDown, Search, Filter, ChevronDown } from 'lucide-react';
 
 interface RegionTableProps {
   stations?: Station[];
@@ -72,14 +72,14 @@ export function RegionTable({ stations = [] }: RegionTableProps) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card overflow-hidden">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="ow-card overflow-hidden">
       <button
         onClick={() => setCollapsed(c => !c)}
-        className="w-full px-4 py-3 border-b border-border/50 flex items-center justify-between text-left"
+        className="w-full px-5 py-4 flex items-center justify-between text-left"
       >
         <div>
-          <h2 className="text-sm font-semibold font-display text-foreground">Xếp hạng khu vực</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <h2 className="text-lg md:text-xl font-bold font-display text-foreground">Xếp hạng khu vực</h2>
+          <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
             Sắp xếp theo {sortKey === 'aqi' ? 'AQI' : sortKey === 'pm25' ? 'PM2.5' : sortKey === 'name' ? 'Tên' : sortKey === 'region' ? 'Khu vực' : sortKey === 'temperature' ? 'Nhiệt độ' : 'Độ ẩm'} {sortDir === 'desc' ? 'giảm dần' : 'tăng dần'}
           </p>
         </div>
@@ -112,70 +112,61 @@ export function RegionTable({ stations = [] }: RegionTableProps) {
       </div>
 
       <div className={`overflow-x-auto ${collapsed ? 'hidden' : ''}`}>
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border/50">
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">#</th>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium cursor-pointer select-none" onClick={() => handleSort('name')}>
+            <tr className="border-y border-border/50 bg-secondary/30">
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">#</th>
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => handleSort('name')}>
                 <span className="flex items-center gap-1">Trạm <SortIcon col="name" /></span>
               </th>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium cursor-pointer select-none" onClick={() => handleSort('region')}>
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => handleSort('region')}>
                 <span className="flex items-center gap-1">Khu vực <SortIcon col="region" /></span>
               </th>
-              <th className="px-4 py-2.5 text-center text-muted-foreground font-medium cursor-pointer select-none" onClick={() => handleSort('aqi')}>
-                <span className="flex items-center justify-center gap-1">AQI <SortIcon col="aqi" /></span>
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => handleSort('aqi')}>
+                <span className="flex items-center gap-1">AQI <SortIcon col="aqi" /></span>
               </th>
-              <th className="px-4 py-2.5 text-left text-muted-foreground font-medium">Trạng thái</th>
-              <th className="px-4 py-2.5 text-center text-muted-foreground font-medium cursor-pointer select-none" onClick={() => handleSort('pm25')}>
-                <span className="flex items-center justify-center gap-1">PM2.5 <SortIcon col="pm25" /></span>
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Trạng thái</th>
+              <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => handleSort('pm25')}>
+                <span className="flex items-center justify-end gap-1">PM2.5 <SortIcon col="pm25" /></span>
               </th>
-              <th className="px-4 py-2.5 text-center text-muted-foreground font-medium hidden md:table-cell cursor-pointer select-none" onClick={() => handleSort('temperature')}>
-                <span className="flex items-center justify-center gap-1">Nhiệt độ <SortIcon col="temperature" /></span>
+              <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell cursor-pointer select-none" onClick={() => handleSort('temperature')}>
+                <span className="flex items-center justify-end gap-1">Nhiệt độ <SortIcon col="temperature" /></span>
               </th>
-              <th className="px-4 py-2.5 text-center text-muted-foreground font-medium hidden md:table-cell">Xu hướng</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((station, i) => {
               const level = getAQILevel(station.aqi);
-              const colorClass = getAQIColorClass(level);
-              const bgClass = getAQIBgClass(level);
-              const epa = getAqiCategory(station.aqi);
-              const trend = i % 3 === 0 ? 'up' : i % 3 === 1 ? 'down' : 'stable';
+              const { solid, tint } = getAQIColors(level);
 
               return (
-                <tr key={station.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">
-                  <td className="px-4 py-2.5 text-muted-foreground font-medium">{i + 1}</td>
-                  <td className="px-4 py-2.5 font-medium text-foreground max-w-[200px] truncate">
+                <tr key={station.id} className="border-b border-border/30 last:border-b-0 hover:bg-secondary/30 transition-colors">
+                  <td className="px-5 py-3.5 text-muted-foreground font-medium">{i + 1}</td>
+                  <td className="px-5 py-3.5 font-semibold text-foreground max-w-[220px] truncate">
                     <Link to={`/stations/${station.id}`} className="hover:text-primary hover:underline">
                       {station.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{station.region}</td>
-                  <td className="px-4 py-2.5 text-center">
+                  <td className="px-5 py-3.5 text-muted-foreground">{station.region}</td>
+                  <td className="px-5 py-3.5">
                     <span
-                      className="inline-flex px-2 py-0.5 rounded-md font-bold"
-                      style={{ backgroundColor: epa.color, color: epa.textColor }}
+                      className="inline-flex min-w-[44px] justify-center px-2.5 py-1 rounded-full font-bold text-white"
+                      style={{ backgroundColor: solid }}
                     >
                       {station.aqi}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 font-medium" style={{ color: epa.color }}>
-                    {epa.label}
+                  <td className="px-5 py-3.5 font-semibold" style={{ color: solid }}>
+                    {getAQILabel(level)}
                   </td>
-                  <td className="px-4 py-2.5 text-center text-foreground">{station.pm25}</td>
-                  <td className="px-4 py-2.5 text-center text-foreground hidden md:table-cell">{station.temperature}°C</td>
-                  <td className="px-4 py-2.5 text-center hidden md:table-cell">
-                    {trend === 'up' && <TrendingUp className="w-4 h-4 text-destructive inline-block" />}
-                    {trend === 'down' && <TrendingDown className="w-4 h-4 text-primary inline-block" />}
-                    {trend === 'stable' && <Minus className="w-4 h-4 text-muted-foreground inline-block" />}
-                  </td>
+                  <td className="px-5 py-3.5 text-right text-foreground">{station.pm25}</td>
+                  <td className="px-5 py-3.5 text-right text-muted-foreground hidden md:table-cell">{station.temperature}°C</td>
                 </tr>
               );
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={7} className="px-5 py-6 text-center text-muted-foreground">
                   Không tìm thấy trạm phù hợp
                 </td>
               </tr>

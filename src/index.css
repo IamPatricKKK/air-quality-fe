@@ -147,28 +147,88 @@
 
   /* ── OpenWeather-inspired primitives (keep AQI palette) ── */
 
-  /* Full-bleed sky gradient hero (sunrise→sky→fade to bg) */
+  /* Full-bleed mint→teal animated gradient hero (fresh-air aurora) */
   .sky-hero {
     background:
-      radial-gradient(120% 80% at 80% -10%, hsl(28 90% 70% / 0.45) 0%, transparent 45%),
+      radial-gradient(50% 55% at 18% 22%, hsl(180 72% 82% / 0.85) 0%, transparent 60%),
+      radial-gradient(48% 52% at 82% 28%, hsl(158 64% 80% / 0.8) 0%, transparent 60%),
+      radial-gradient(55% 55% at 50% 78%, hsl(196 78% 84% / 0.7) 0%, transparent 62%),
       linear-gradient(
         180deg,
-        hsl(205 80% 64%) 0%,
-        hsl(200 70% 72%) 30%,
-        hsl(190 50% 85%) 62%,
+        hsl(170 56% 87%) 0%,
+        hsl(158 46% 90%) 55%,
         hsl(var(--background)) 100%
       );
+    background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+    background-position: 0% 50%, 100% 50%, 50% 0%, 0 0;
+    animation: sky-drift 20s ease-in-out infinite;
   }
   .dark .sky-hero {
     background:
-      radial-gradient(120% 80% at 80% -10%, hsl(28 70% 45% / 0.35) 0%, transparent 45%),
+      radial-gradient(50% 55% at 18% 22%, hsl(185 60% 18% / 0.9) 0%, transparent 60%),
+      radial-gradient(48% 52% at 82% 28%, hsl(165 55% 16% / 0.85) 0%, transparent 60%),
+      radial-gradient(55% 55% at 50% 78%, hsl(198 60% 18% / 0.8) 0%, transparent 62%),
       linear-gradient(
         180deg,
-        hsl(215 45% 24%) 0%,
-        hsl(212 40% 17%) 45%,
-        hsl(218 32% 12%) 75%,
+        hsl(190 48% 10%) 0%,
+        hsl(193 42% 8%) 55%,
         hsl(var(--background)) 100%
       );
+    background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+    background-position: 0% 50%, 100% 50%, 50% 0%, 0 0;
+    animation: sky-drift 20s ease-in-out infinite;
+  }
+
+  @keyframes sky-drift {
+    0% {
+      background-position: 0% 50%, 100% 50%, 50% 0%, 0 0;
+    }
+    50% {
+      background-position: 100% 50%, 0% 50%, 50% 100%, 0 0;
+    }
+    100% {
+      background-position: 0% 50%, 100% 50%, 50% 0%, 0 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sky-hero {
+      animation: none;
+    }
+  }
+
+  /* Gradient teal heading text (cyan → emerald) */
+  .text-aqi-gradient {
+    background: linear-gradient(90deg, hsl(190 90% 42%) 0%, hsl(165 84% 38%) 55%, hsl(155 78% 40%) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Teal gradient CTA / banner card (slow animated shift) */
+  .cta-gradient {
+    background: linear-gradient(
+      120deg,
+      hsl(192 80% 42%) 0%,
+      hsl(178 76% 40%) 30%,
+      hsl(165 72% 39%) 60%,
+      hsl(150 68% 40%) 100%
+    );
+    background-size: 200% 200%;
+    animation: cta-shift 14s ease-in-out infinite;
+  }
+
+  @keyframes cta-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cta-gradient {
+      animation: none;
+    }
   }
 
   /* Soft cream sky for lighter sections */
@@ -186,6 +246,27 @@
   }
   .dark .ow-card {
     box-shadow: 0 1px 2px hsl(0 0% 0% / 0.3), 0 16px 36px -18px hsl(0 0% 0% / 0.6);
+  }
+
+  /* Floating glass header bar (vieneu-inspired island) — bg/border/shadow
+     driven inline by scroll progress; this holds the static shell. */
+  .vn-header {
+    @apply rounded-2xl border backdrop-blur-xl;
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Gradient pill CTA (cyan → blue, matches Logo accent) */
+  .vn-btn-gradient {
+    background: linear-gradient(120deg, #06b6d4 0%, #3b82f6 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px -6px hsl(206 80% 45% / 0.55);
+    transition: filter 0.18s ease, transform 0.18s ease;
+  }
+  .vn-btn-gradient:hover {
+    filter: brightness(1.06);
+  }
+  .vn-btn-gradient:active {
+    transform: translateY(0.5px);
   }
 
   /* Translucent card that floats over the sky hero */
@@ -257,6 +338,15 @@
 
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Hide scrollbar for swipeable carousels (keeps native scroll/swipe) */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

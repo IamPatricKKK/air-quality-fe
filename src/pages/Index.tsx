@@ -24,7 +24,7 @@ import { usePinnedStations } from '@/hooks/usePinnedStations';
 import { useCompareStations } from '@/hooks/useCompareStations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { StationWithReading } from '@/types';
-import { Search, X, GitCompare, Info, MapPin } from 'lucide-react';
+import { Search, X, GitCompare, Info, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
 import { toast } from 'sonner';
@@ -48,6 +48,9 @@ const Index = () => {
   };
   const [selectedStation, setSelectedStation] = useState<StationWithReading | null>(null);
   const stationPanelRef = useRef<HTMLDivElement>(null);
+  const mapSectionRef = useRef<HTMLDivElement>(null);
+  const cardScrollRef = useRef<HTMLDivElement>(null);
+  const mobileCardScrollRef = useRef<HTMLDivElement>(null);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('home');
   const [cardSearch, setCardSearch] = useState('');
@@ -152,6 +155,21 @@ const Index = () => {
     setMobileTab(tab);
   }, []);
 
+  const scrollCards = useCallback((ref: React.RefObject<HTMLDivElement>, dir: number) => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: 'smooth' });
+  }, []);
+
+  const handleDesktopCardClick = useCallback((station: StationWithReading) => {
+    setSelectedStation(station);
+    setForceFly(true);
+    setTimeout(() => setForceFly(false), 2000);
+    setTimeout(() => {
+      mapSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, []);
+
   const handleSearchSelect = useCallback((station: StationWithReading) => {
     setSelectedStation(station);
     if (isMobile) {
@@ -244,18 +262,26 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                {sortedStations.slice(0, 4).map((station, i) => (
-                  <AQICard
-                    key={station.id}
-                    station={station}
-                    onClick={handleMobileCardClick}
-                    index={i}
-                    isPinned={isPinned(station.id)}
-                    onTogglePin={togglePin}
-                    isCompared={compare.isCompared(station.id)}
-                    onToggleCompare={handleToggleCompare}
-                  />
+              <div className="flex items-center justify-between px-0.5">
+                <h2 className="text-sm font-semibold font-display text-foreground">Trạm quan trắc</h2>
+                <span className="text-[10px] text-muted-foreground">Vuốt để xem tất cả →</span>
+              </div>
+              <div
+                ref={mobileCardScrollRef}
+                className="grid grid-rows-2 grid-flow-col auto-cols-[200px] gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory -mx-3 px-3 py-1"
+              >
+                {sortedStations.map((station, i) => (
+                  <div key={station.id} className="snap-start">
+                    <AQICard
+                      station={station}
+                      onClick={handleMobileCardClick}
+                      index={Math.min(i, 8)}
+                      isPinned={isPinned(station.id)}
+                      onTogglePin={togglePin}
+                      isCompared={compare.isCompared(station.id)}
+                      onToggleCompare={handleToggleCompare}
+                    />
+                  </div>
                 ))}
               </div>
               {selectedStation && (
@@ -303,67 +329,97 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pb-6">
 
-      {/* Sky hero */}
-      <div className="sky-hero px-3 md:px-4 lg:px-6 pt-6 pb-12">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
-            Chất lượng không khí Việt Nam
+      <div className="px-3 md:px-4 lg:px-6 pt-6 space-y-4">
+
+      {/* Dashboard header */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold font-display text-foreground">
+            Bảng tổng quan
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5 mb-4">
+          <p className="text-sm text-muted-foreground mt-1.5">
             Theo dõi AQI &amp; PM2.5 thời gian thực từ 50+ trạm quan trắc trên toàn quốc.
           </p>
+        </div>
+        <div className="w-full md:w-80 lg:w-96 md:flex-shrink-0">
           <SearchStation stations={stations} onSelect={setSelectedStation} />
         </div>
       </div>
 
-      <div className="relative -mt-6 px-3 md:px-4 lg:px-6 space-y-4">
-
       <AQISummary stations={stations} />
 
-      {/* Station cards with search & pin */}
+      {/* Station cards — swipeable carousel (all stations) */}
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Tìm trạm..."
-              value={cardSearch}
-              onChange={e => setCardSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-secondary rounded-lg text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition-all"
-            />
-            {cardSearch && (
-              <button onClick={() => setCardSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="w-3.5 h-3.5" />
-              </button>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg md:text-xl font-bold font-display text-foreground">Trạm quan trắc</h2>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {pinnedIds.length > 0 && (
+              <span className="hidden lg:inline text-[10px] text-muted-foreground">{pinnedIds.length} trạm đã ghim</span>
             )}
+            <div className="relative w-36 sm:w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Tìm trạm..."
+                value={cardSearch}
+                onChange={e => setCardSearch(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 bg-secondary rounded-lg text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+              />
+              {cardSearch && (
+                <button onClick={() => setCardSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="hidden sm:flex items-center gap-1.5">
+              <button
+                onClick={() => scrollCards(cardScrollRef, -1)}
+                aria-label="Xem trạm trước"
+                className="p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/70 active:scale-95 transition-all"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollCards(cardScrollRef, 1)}
+                aria-label="Xem trạm tiếp theo"
+                className="p-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/70 active:scale-95 transition-all"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          {pinnedIds.length > 0 && (
-            <span className="text-[10px] text-muted-foreground">{pinnedIds.length} trạm đã ghim</span>
-          )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {sortedStations.slice(0, 10).map((station, i) => (
-            <AQICard
-              key={station.id}
-              station={station}
-              onClick={setSelectedStation}
-              index={i}
-              isPinned={isPinned(station.id)}
-              onTogglePin={togglePin}
-              isCompared={compare.isCompared(station.id)}
-              onToggleCompare={handleToggleCompare}
-            />
-          ))}
-        </div>
+        {sortedStations.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">Không tìm thấy trạm phù hợp.</p>
+        ) : (
+          <div
+            ref={cardScrollRef}
+            className="grid grid-rows-2 grid-flow-col auto-cols-[250px] sm:auto-cols-[270px] gap-3 md:gap-4 overflow-x-auto hide-scrollbar snap-x snap-mandatory py-2"
+          >
+            {sortedStations.map((station, i) => (
+              <div key={station.id} className="snap-start">
+                <AQICard
+                  station={station}
+                  onClick={handleDesktopCardClick}
+                  index={Math.min(i, 8)}
+                  isPinned={isPinned(station.id)}
+                  onTogglePin={togglePin}
+                  isCompared={compare.isCompared(station.id)}
+                  onToggleCompare={handleToggleCompare}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:items-start">
+      <div ref={mapSectionRef} className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:items-start scroll-mt-20">
         <div className="lg:col-span-2 lg:sticky lg:top-24 h-[60vh] lg:h-[calc(100vh-7rem)] min-h-[520px]">
           <AQIMap
             stations={stations}
             selectedStation={selectedStation}
             onSelectStation={setSelectedStation}
+            forceFly={forceFly}
           />
         </div>
         <div className="lg:col-span-1 space-y-4">

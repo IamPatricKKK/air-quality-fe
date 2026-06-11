@@ -2,3 +2,6 @@ node_modules
 dist
 .env
 .DS_Store
+
+# Bản dump DB (>100MB, không đẩy lên GitHub). Dùng để sinh public/mock.
+dump-*.sql

@@ -41,6 +41,20 @@ export function getAQIColorClass(level: AQILevel): string {
   return `aqi-${level}`;
 }
 
+/**
+ * Inline-style colors for an AQI level, derived from the app's `--aqi-*`
+ * CSS variables so pills/accents stay consistent in light & dark mode.
+ * - `solid`: full-opacity color (number pills, top accents)
+ * - `tint`:  soft translucent background (status pills)
+ */
+export function getAQIColors(level: AQILevel): { solid: string; tint: string } {
+  const v = `var(--aqi-${level})`;
+  return {
+    solid: `hsl(${v})`,
+    tint: `hsl(${v} / 0.14)`,
+  };
+}
+
 export function getAQIBgClass(level: AQILevel): string {
   return `bg-aqi-${level}`;
 }

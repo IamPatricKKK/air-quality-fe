@@ -4,6 +4,8 @@
  * FE cần gọi BE cho analytics/forecast data.
  */
 
+import { USE_MOCK, mockBeRequest } from "@/api/mockDb";
+
 const BE_URL = import.meta.env.VITE_AIR_QUALITY_BE_URL;
 const SESSION_KEY = "air-quality-fe:user-session";
 
@@ -19,6 +21,7 @@ function getAuth() {
 }
 
 async function beRequest<T>(path: string): Promise<T> {
+  if (USE_MOCK) return mockBeRequest<T>(path);
   if (!BE_URL) throw new Error("BE URL not configured (VITE_AIR_QUALITY_BE_URL)");
   const auth = getAuth();
   const res = await fetch(`${BE_URL}${path}`, {
