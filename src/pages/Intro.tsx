@@ -6,6 +6,8 @@ import { useAuthModal } from '@/hooks/useAuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 
+// Trang giới thiệu dành cho người ĐÃ đăng nhập. UI/nội dung tạm sao y trang
+// Landing — sẽ cập nhật nội dung riêng sau. (Landing là bản cho khách chưa đăng nhập.)
 const FEATURES = [
   {
     icon: BarChart3,
@@ -39,15 +41,15 @@ const FEATURES = [
   },
 ];
 
-export default function Landing() {
+export default function Intro() {
   const navigate = useNavigate();
   const { openAuthModal } = useAuthModal();
   const { user, loading } = useAuth();
 
-  // Đã đăng nhập → vào thẳng dashboard, không hiện trang giới thiệu.
+  // Chưa đăng nhập → chuyển về trang Landing.
   useEffect(() => {
-    if (!loading && user) {
-      navigate('/home', { replace: true });
+    if (!loading && !user) {
+      navigate('/', { replace: true });
     }
   }, [loading, user, navigate]);
 
@@ -55,8 +57,8 @@ export default function Landing() {
     navigate('/home');
   };
 
-  // Tránh nháy nội dung Landing trong lúc chờ chuyển hướng.
-  if (!loading && user) {
+  // Tránh nháy nội dung trong lúc chờ chuyển hướng (khi chưa đăng nhập).
+  if (!loading && !user) {
     return null;
   }
 

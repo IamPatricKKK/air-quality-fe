@@ -113,9 +113,9 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
           </div>
         )}
 
-        {/* Giới thiệu */}
+        {/* Giới thiệu — đã đăng nhập vào /intro, khách vào trang Landing */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(user ? '/intro' : '/')}
           className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-secondary text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           title="Giới thiệu"
         >

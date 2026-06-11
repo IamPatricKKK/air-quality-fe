@@ -30,6 +30,7 @@ const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("@/pages/VerifyEmail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Landing = lazy(() => import("@/pages/Landing"));
+const Intro = lazy(() => import("@/pages/Intro"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const ProfileSettings = lazy(() => import("@/pages/ProfileSettings"));
 
@@ -96,35 +97,40 @@ function GlobalHeader() {
 }
 
 function HeaderScrollWrapper() {
-  const [progress, setProgress] = useState(0);
+  // Binary state: crossing the 10px threshold toggles "docked"; CSS handles
+  // the 2s ease both ways (no scroll-position interpolation).
+  const [docked, setDocked] = useState(false);
 
   useEffect(() => {
-    // Short range → the bar "docks" quickly, like vieneu.io
-    const RANGE = 96;
-    const onScroll = () => setProgress(Math.min(1, window.scrollY / RANGE));
+    const THRESHOLD = 10;
+    const onScroll = () => setDocked(window.scrollY > THRESHOLD);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Interpolate the floating-island look from "resting" → "docked".
-  const topPad = 16 - 10 * progress;          // 16px → 6px
-  const bgAlpha = 0.45 + 0.45 * progress;     // translucent → solid glass
-  const borderAlpha = 0.3 + 0.5 * progress;   // faint → defined edge
-  const shadowBlur = 24 + 16 * progress;
-  const shadowAlpha = 0.1 + 0.18 * progress;
-  const scale = 1 - 0.012 * progress;         // subtle condense on scroll
+  const p = docked ? 1 : 0; // resting (0) → docked (1)
+
+  // 2s tween, applied via CSS transition (not scroll mapping).
+  const EASE = '2s cubic-bezier(0.22, 1, 0.36, 1)';
 
   return (
-    <div style={{ paddingTop: topPad }}>
+    <div
+      style={{
+        paddingTop: 10 + 10 * p,                // 10px → 20px
+        transition: `padding-top ${EASE}`,
+      }}
+    >
       <div
-        className="vn-header will-change-transform transition-transform duration-200"
+        className="vn-header will-change-transform mx-auto"
         style={{
-          background: `hsl(var(--card) / ${bgAlpha})`,
-          borderColor: `hsl(var(--border) / ${borderAlpha})`,
-          boxShadow: `inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 ${8 + 12 * progress}px ${shadowBlur}px -12px hsl(220 30% 10% / ${shadowAlpha})`,
-          transform: `scale(${scale})`,
+          maxWidth: 1700 - 200 * p,             // full → ~1500px centered
+          background: `hsl(var(--card) / ${0.45 + 0.45 * p})`,
+          borderColor: `hsl(var(--border) / ${0.3 + 0.5 * p})`,
+          boxShadow: `inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 ${8 + 16 * p}px ${24 + 36 * p}px ${-12 + 6 * p}px hsl(220 30% 10% / ${0.1 + 0.32 * p})`,
+          transform: `scale(${1 - 0.012 * p})`,
           transformOrigin: 'top center',
+          transition: `max-width ${EASE}, background ${EASE}, border-color ${EASE}, box-shadow ${EASE}, transform ${EASE}`,
         }}
       >
         <Header />
@@ -189,8 +195,10 @@ export default function App() {
                 <GlobalMobileNav />
                 <Suspense fallback={<RouteSkeleton />}>
                   <Routes>
-                    {/* Landing — trang giới thiệu */}
+                    {/* Landing — trang giới thiệu (khách chưa đăng nhập) */}
                     <Route path="/" element={<Landing />} />
+                    {/* Intro — trang giới thiệu cho người đã đăng nhập */}
+                    <Route path="/intro" element={<Intro />} />
                     {/* Public — duyệt dữ liệu tự do, không cần đăng nhập */}
                     <Route path="/home" element={<Index />} />
                     <Route path="/stations/:id" element={<StationDetailPage />} />

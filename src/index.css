@@ -255,6 +255,20 @@
     -webkit-backdrop-filter: blur(20px);
   }
 
+  /* Bleed a colored top section up behind the floating global header so its
+     background runs continuously under the glass bar (kills the two-tone seam).
+     Offset = header height (mobile ~56px, desktop ~84px). Parent needs flow-root. */
+  .under-header {
+    margin-top: -56px;
+    padding-top: 56px;
+  }
+  @media (min-width: 768px) {
+    .under-header {
+      margin-top: -84px;
+      padding-top: 84px;
+    }
+  }
+
   /* Gradient pill CTA (cyan → blue, matches Logo accent) */
   .vn-btn-gradient {
     background: linear-gradient(120deg, #06b6d4 0%, #3b82f6 100%);
