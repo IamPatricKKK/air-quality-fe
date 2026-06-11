@@ -96,22 +96,37 @@ function GlobalHeader() {
 }
 
 function HeaderScrollWrapper() {
-  const [scrollY, setScrollY] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
+    // Short range → the bar "docks" quickly, like vieneu.io
+    const RANGE = 96;
+    const onScroll = () => setProgress(Math.min(1, window.scrollY / RANGE));
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Half viewport height as the transition range
-  const halfScreen = typeof window !== 'undefined' ? window.innerHeight / 2 : 400;
-  const progress = Math.min(1, scrollY / halfScreen);
-  const topPad = 16 * (1 - progress);
+  // Interpolate the floating-island look from "resting" → "docked".
+  const topPad = 16 - 10 * progress;          // 16px → 6px
+  const bgAlpha = 0.45 + 0.45 * progress;     // translucent → solid glass
+  const borderAlpha = 0.3 + 0.5 * progress;   // faint → defined edge
+  const shadowBlur = 24 + 16 * progress;
+  const shadowAlpha = 0.1 + 0.18 * progress;
+  const scale = 1 - 0.012 * progress;         // subtle condense on scroll
 
   return (
     <div style={{ paddingTop: topPad }}>
-      <div className={`${progress > 0.05 ? 'bg-background/95 backdrop-blur-xl shadow-sm' : ''} rounded-xl transition-[background-color,box-shadow] duration-200`}>
+      <div
+        className="vn-header will-change-transform transition-transform duration-200"
+        style={{
+          background: `hsl(var(--card) / ${bgAlpha})`,
+          borderColor: `hsl(var(--border) / ${borderAlpha})`,
+          boxShadow: `inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 ${8 + 12 * progress}px ${shadowBlur}px -12px hsl(220 30% 10% / ${shadowAlpha})`,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center',
+        }}
+      >
         <Header />
       </div>
     </div>

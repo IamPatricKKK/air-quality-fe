@@ -71,7 +71,7 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="glass-card px-4 md:px-6 h-16 flex items-center justify-between"
+      className="px-4 md:px-6 h-16 flex items-center justify-between"
     >
       <Logo size="md" />
 
@@ -152,7 +152,7 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
         {!user && (
           <button
             onClick={openAuthModal}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="vn-btn-gradient inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-semibold"
           >
             <User className="w-4 h-4" />
             Đăng nhập
