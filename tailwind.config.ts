@@ -13,87 +13,93 @@ export default {
       },
     },
     fontFamily: {
-      display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-      body: ['"Inter"', 'system-ui', 'sans-serif'],
+      /* DM Sans: clean, modern body text */
+      sans:    ['"DM Sans"', 'system-ui', 'sans-serif'],
+      body:    ['"DM Sans"', 'system-ui', 'sans-serif'],
+      /* Instrument Serif: editorial, authoritative display */
+      display: ['"Instrument Serif"', 'Georgia', 'serif'],
+      /* DM Mono: precision data readouts */
+      mono:    ['"DM Mono"', 'ui-monospace', 'monospace'],
     },
     extend: {
       colors: {
-        "aqi-good": "hsl(var(--aqi-good))",
-        "aqi-moderate": "hsl(var(--aqi-moderate))",
-        "aqi-unhealthy-sensitive": "hsl(var(--aqi-unhealthy-sensitive))",
-        "aqi-unhealthy": "hsl(var(--aqi-unhealthy))",
-        "aqi-very-unhealthy": "hsl(var(--aqi-very-unhealthy))",
-        "aqi-hazardous": "hsl(var(--aqi-hazardous))",
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        /* ── Semantic tokens (shadcn-compatible) ── */
+        "aqi-good":                 "hsl(var(--aqi-good))",
+        "aqi-moderate":             "hsl(var(--aqi-moderate))",
+        "aqi-unhealthy-sensitive":  "hsl(var(--aqi-unhealthy-sensitive))",
+        "aqi-unhealthy":            "hsl(var(--aqi-unhealthy))",
+        "aqi-very-unhealthy":       "hsl(var(--aqi-very-unhealthy))",
+        "aqi-hazardous":            "hsl(var(--aqi-hazardous))",
+        border:       "hsl(var(--border))",
+        input:        "hsl(var(--input))",
+        ring:         "hsl(var(--ring))",
+        background:   "hsl(var(--background))",
+        foreground:   "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT:    "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
+          DEFAULT:    "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
+          DEFAULT:    "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
+          DEFAULT:    "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
+          DEFAULT:    "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
+          DEFAULT:    "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
+          DEFAULT:    "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
         sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
+          DEFAULT:              "hsl(var(--sidebar-background))",
+          foreground:           "hsl(var(--sidebar-foreground))",
+          primary:              "hsl(var(--sidebar-primary))",
           "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
+          accent:               "hsl(var(--sidebar-accent))",
+          "accent-foreground":  "hsl(var(--sidebar-accent-foreground))",
+          border:               "hsl(var(--sidebar-border))",
+          ring:                 "hsl(var(--sidebar-ring))",
+        },
+
+        /* ── Brand tokens (direct hex access) ── */
+        brand: {
+          navy:  "#003049",
+          sky:   "#669bbc",
+          cream: "#fdf0d5",
+          ember: "#ff6b35",
         },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 5px)",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to:   { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to:   { height: "0" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-up":   "accordion-up 0.2s ease-out",
       },
     },
   },

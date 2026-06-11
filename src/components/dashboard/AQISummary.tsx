@@ -1,75 +1,116 @@
 import { motion } from 'framer-motion';
 import { Activity, AlertTriangle, Radio, Wind } from 'lucide-react';
-import type { Station } from '@/data/mockData';
+import type { StationWithReading } from '@/types';
 
 interface AQISummaryProps {
-  stations: Station[];
+  stations: StationWithReading[];
 }
 
-export function AQISummary({ stations }: AQISummaryProps) {
-  if (stations.length === 0) {
-    return null;
-  }
-
-  const avgAqi = Math.round(stations.reduce((sum, s) => sum + s.aqi, 0) / stations.length);
+/* Brand-aligned card configurations. Colors derived strictly from the
+   design system: navy, sky blue, ember orange, and the AQI semantic value. */
+function getCards(stations: StationWithReading[]) {
+  const avgAqi = Math.round(stations.reduce((s, x) => s + x.aqi, 0) / stations.length);
   const alertCount = stations.filter(s => s.aqi > 100).length;
   const worstStation = [...stations].sort((a, b) => b.aqi - a.aqi)[0];
 
-  const cards = [
+  return [
     {
       icon: Wind,
       label: 'AQI trung bình',
       value: avgAqi,
       sub: 'Toàn quốc',
-      iconClass: 'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400',
-      valueClass: 'text-emerald-600 dark:text-emerald-400',
+      /* Sky blue — informational */
+      iconBg: 'hsl(203 39% 57% / 0.12)',
+      iconColor: 'hsl(203 39% 52%)',
+      valueColor: 'hsl(201 100% 14%)',
+      accentBar: 'hsl(203 39% 57%)',
     },
     {
       icon: Radio,
       label: 'Tổng trạm',
       value: stations.length,
       sub: 'Đang hoạt động',
-      iconClass: 'bg-cyan-500/12 text-cyan-600 dark:text-cyan-400',
-      valueClass: 'text-cyan-600 dark:text-cyan-400',
+      /* Navy — authority */
+      iconBg: 'hsl(201 100% 14% / 0.09)',
+      iconColor: 'hsl(201 100% 22%)',
+      valueColor: 'hsl(201 100% 14%)',
+      accentBar: 'hsl(201 100% 14%)',
     },
     {
       icon: AlertTriangle,
       label: 'Cảnh báo',
       value: alertCount,
-      sub: 'Vượt ngưỡng',
-      iconClass: 'bg-orange-500/12 text-orange-600 dark:text-orange-400',
-      valueClass: 'text-orange-600 dark:text-orange-400',
+      sub: 'Vượt ngưỡng AQI 100',
+      /* Ember orange — warning (natural fit for air quality) */
+      iconBg: 'hsl(16 100% 60% / 0.12)',
+      iconColor: 'hsl(16 100% 50%)',
+      valueColor: alertCount > 0 ? 'hsl(16 100% 45%)' : 'hsl(201 100% 14%)',
+      accentBar: 'hsl(16 100% 55%)',
     },
     {
       icon: Activity,
       label: 'Ô nhiễm nhất',
       value: worstStation.aqi,
-      sub: worstStation.region,
-      iconClass: 'bg-purple-500/12 text-purple-600 dark:text-purple-400',
-      valueClass: 'text-purple-600 dark:text-purple-400',
+      sub: worstStation.name || worstStation.region,
+      /* Contextual: amber/orange for elevated, navy for clean */
+      iconBg: worstStation.aqi > 100 ? 'hsl(28 90% 50% / 0.12)' : 'hsl(142 58% 36% / 0.12)',
+      iconColor: worstStation.aqi > 100 ? 'hsl(28 90% 44%)' : 'hsl(142 58% 32%)',
+      valueColor: worstStation.aqi > 100 ? 'hsl(28 90% 40%)' : 'hsl(142 58% 32%)',
+      accentBar: worstStation.aqi > 100 ? 'hsl(28 90% 50%)' : 'hsl(142 58% 36%)',
     },
   ];
+}
+
+export function AQISummary({ stations }: AQISummaryProps) {
+  if (stations.length === 0) return null;
+
+  const cards = getCards(stations);
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       {cards.map((card, i) => (
         <motion.div
           key={card.label}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.08 }}
-          className="ow-card p-4 md:p-5"
+          transition={{ delay: i * 0.07, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="ow-card relative overflow-hidden p-4 md:p-5"
         >
-          <span className={`flex w-11 h-11 md:w-12 md:h-12 rounded-2xl items-center justify-center ${card.iconClass}`}>
-            <card.icon className="w-5 h-5 md:w-[22px] md:h-[22px]" />
+          {/* Colored left accent bar */}
+          <span
+            className="absolute inset-y-0 left-0 w-[3px] rounded-full"
+            style={{ background: card.accentBar }}
+          />
+
+          {/* Icon */}
+          <span
+            className="flex w-10 h-10 rounded-xl items-center justify-center"
+            style={{ background: card.iconBg }}
+          >
+            <card.icon className="w-5 h-5" style={{ color: card.iconColor }} />
           </span>
-          <p className="mt-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {card.label}
-          </p>
-          <div className={`mt-1 text-3xl md:text-4xl font-bold font-display leading-none ${card.valueClass}`}>
+
+          {/* Label */}
+          <p className="mt-3 section-label">{card.label}</p>
+
+          {/* Value — dominant focal point */}
+          <div
+            className="mt-1 font-display leading-none"
+            style={{
+              fontFamily: "'DM Mono', ui-monospace, monospace",
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 500,
+              letterSpacing: '-0.02em',
+              color: card.valueColor,
+            }}
+          >
             {card.value}
           </div>
-          <p className="mt-1.5 text-[11px] md:text-xs text-muted-foreground truncate">{card.sub}</p>
+
+          {/* Sub-label */}
+          <p className="mt-1.5 text-[11px] text-muted-foreground truncate font-medium">
+            {card.sub}
+          </p>
         </motion.div>
       ))}
     </div>

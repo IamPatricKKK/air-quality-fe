@@ -4,6 +4,7 @@ export interface AppUser {
   roles: string[];
   user_metadata: {
     display_name?: string;
+    auth_provider?: string;
   };
 }
 

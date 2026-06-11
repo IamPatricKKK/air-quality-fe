@@ -8,68 +8,64 @@ interface LogoProps {
 
 export function Logo({ size = 'md', showText = true, vertical = false }: LogoProps) {
   const iconSize = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
+    sm: 'w-7 h-7',
+    md: 'w-9 h-9',
     lg: 'w-20 h-20',
   }[size];
 
   const titleSize = {
-    sm: 'text-[13px]',
-    md: 'text-2xl',
+    sm: 'text-sm',
+    md: 'text-xl',
     lg: 'text-3xl',
   }[size];
 
   const subSize = {
-    sm: 'text-[10px]',
-    md: 'text-xs',
-    lg: 'text-sm',
-  }[size];
-
-  const letterSpacing = {
-    sm: '0.02em',
-    md: '0.03em',
-    lg: '0.04em',
+    sm: 'text-[9px]',
+    md: 'text-[10px]',
+    lg: 'text-xs',
   }[size];
 
   const location = useLocation();
-  const isHome = location.pathname === '/home';
+  const scrollsToTop = location.pathname === '/home' || location.pathname === '/';
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isHome) {
+    if (scrollsToTop) {
       e.preventDefault();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   return (
-    <Link to="/home" onClick={handleClick} className={`${vertical ? 'flex flex-col items-center gap-2' : 'flex items-center gap-2.5'} no-underline`}>
+    <Link
+      to="/home"
+      onClick={handleClick}
+      className={`${vertical ? 'flex flex-col items-center gap-2' : 'flex items-center gap-2.5'} no-underline group`}
+    >
       <img
         src="/logo-icon.png"
         alt="AirQualityVN"
-        className={`${iconSize} rounded-xl object-contain border border-border/40 shadow-md`}
+        className={`${iconSize} rounded-xl object-contain border border-border/50 shadow-sm transition-transform duration-200 group-hover:scale-[1.03]`}
       />
       {showText && (
         <div className={vertical ? 'text-center' : ''}>
           <h1
-            className={`${titleSize} leading-tight dark:text-[#3B82F6]`}
-            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 1000, color: '#1E56FD' }}
+            className={`${titleSize} leading-tight font-normal tracking-tight`}
+            style={{
+              fontFamily: "'Instrument Serif', Georgia, serif",
+              color: 'hsl(201 100% 14%)',
+            }}
           >
             Air Quality VN
           </h1>
           <p
-            className={`${subSize} leading-tight inline-block`}
+            className={`${subSize} leading-tight font-medium tracking-wide mt-px`}
             style={{
-              fontFamily: "'PT Serif Caption', Georgia, serif",
-              fontStyle: 'italic',
-              fontWeight: 400,
-              letterSpacing,
-              background: 'linear-gradient(90deg, #06B6D4 0%, #3B82F6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              color: 'hsl(201 35% 52%)',
+              letterSpacing: '0.04em',
             }}
           >
-            Theo dõi chất lượng không khí Việt Nam
+            Theo dõi chất lượng không khí
           </p>
         </div>
       )}

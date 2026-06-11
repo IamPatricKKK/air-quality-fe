@@ -45,10 +45,10 @@ export function WardAqiPanel() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.45 }}
-      className="glass-card overflow-hidden"
+      className="ow-card overflow-hidden"
     >
       <div className="px-4 py-3 border-b border-border/50">
-        <h2 className="text-sm font-semibold font-display text-foreground">
+        <h2 className="text-base font-semibold text-foreground">
           Chất lượng không khí theo địa phương
         </h2>
         <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">

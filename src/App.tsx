@@ -77,6 +77,8 @@ function GlobalHeader() {
   const location = useLocation();
   const hideOn = ['/auth', '/auth/forgot', '/auth/reset', '/auth/verify'];
   if (hideOn.some(p => location.pathname.startsWith(p))) return null;
+  // Landing renders its own full-screen video hero with a built-in navbar
+  if (location.pathname === '/') return null;
   // On mobile, /home has its own header
   if (isMobile && location.pathname === '/home') return null;
 
