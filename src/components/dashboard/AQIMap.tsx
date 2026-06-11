@@ -45,20 +45,24 @@ function FlyToStation({ station, stations, forceFly }: { station: Station | null
       hasInitializedView.current = true;
       lastStationId.current = station?.id ?? null;
 
-      if (stations.length === 1) {
-        map.setView([stations[0].lat, stations[0].lng], 8, { animate: false });
-        return;
-      }
-
-      map.fitBounds(
-        L.latLngBounds(stations.map(({ lat, lng }) => [lat, lng] as [number, number])),
-        {
-          padding: [32, 32],
-          maxZoom: 6,
-          animate: false,
+      // Căn khung về tất cả trạm. invalidateSize TRƯỚC để map biết đúng kích
+      // thước (lúc mount trong thẻ glass-card/animation, size có thể chưa
+      // chuẩn → fitBounds lệch, trạm rơi ngoài khung, cluster không vẽ).
+      const applyFit = () => {
+        map.invalidateSize();
+        if (stations.length === 1) {
+          map.setView([stations[0].lat, stations[0].lng], 8, { animate: false });
+          return;
         }
-      );
-      return;
+        map.fitBounds(
+          L.latLngBounds(stations.map(({ lat, lng }) => [lat, lng] as [number, number])),
+          { padding: [32, 32], maxZoom: 6, animate: false }
+        );
+      };
+      applyFit();
+      // Fit lại sau khi layout ổn định (container có thể giãn sau mount).
+      const t = setTimeout(applyFit, 250);
+      return () => clearTimeout(t);
     }
 
     if (!station) return;
@@ -100,6 +104,31 @@ function ViewModeRefresh({ viewMode }: { viewMode: string }) {
     const timer = setTimeout(() => map.invalidateSize(), 50);
     return () => clearTimeout(timer);
   }, [viewMode, map]);
+  return null;
+}
+
+/**
+ * Báo "map đã sẵn sàng" một lần sau khi view khởi tạo (fitBounds) xong.
+ * Khắc phục lỗi react-leaflet-cluster: các chấm trạm không hiện cho tới khi
+ * người dùng tự zoom — vì cluster cần một moveend/zoom SAU lần fitBounds đầu
+ * để vẽ layer. Ta invalidateSize + phát tín hiệu để remount cluster đúng view.
+ */
+function MapReadySignal() {
+  const map = useMap();
+  useEffect(() => {
+    // Sau khi view đã chuẩn (qua lần fit 250ms) và cluster đã mount, ép
+    // markercluster vẽ chấm trạm bằng một vòng zoom THẬT (z+1 rồi về z) tách
+    // làm 2 TICK. Plugin chỉ render khi zoom thực sự đổi; gọi 2 setZoom trong
+    // cùng một tick bị Leaflet gộp lại nên không phát zoomend.
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(() => {
+      map.invalidateSize();
+      const z = map.getZoom();
+      map.setZoom(z + 1, { animate: false });
+      timers.push(setTimeout(() => map.setZoom(z, { animate: false }), 80));
+    }, 450));
+    return () => timers.forEach(clearTimeout);
+  }, [map]);
   return null;
 }
 
@@ -366,6 +395,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
           <FlyToStation station={selectedStation} stations={mappableStations} forceFly={forceFly} />
           <ZoomWatcher onZoomChange={setCurrentZoom} />
           <ViewModeRefresh viewMode={viewMode} />
+          <MapReadySignal />
 
           {viewMode === 'heatmap' && (
             <>
@@ -407,7 +437,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
 
           {viewMode === 'stations' && (
             <MarkerClusterGroup
-              key={`cluster-${viewMode}`}
+              key={`cluster-${viewMode}-${mappableStations.length}`}
               maxClusterRadius={25}
               disableClusteringAtZoom={8}
               spiderfyOnMaxZoom
