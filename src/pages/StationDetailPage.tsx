@@ -48,10 +48,10 @@ export default function StationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-6">
-      {/* Sky hero with current conditions */}
-      <div className="sky-hero px-3 md:px-6 pt-3 pb-12">
-        <div className="max-w-4xl mx-auto space-y-4">
+    <div className="min-h-screen bg-background pb-20 md:pb-6 flow-root">
+      {/* Sky hero — bleeds up behind the floating header (no two-tone seam) */}
+      <div className="sky-hero px-3 md:px-6 pb-12 under-header">
+        <div className="max-w-4xl mx-auto space-y-4 pt-3">
           <BackButton />
 
           <div className="ow-card-glass p-5 md:p-6">

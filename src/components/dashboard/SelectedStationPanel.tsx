@@ -14,14 +14,13 @@ interface Props {
 export function SelectedStationPanel({ station, onViewOnMap }: Props) {
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Link
-          to={`/stations/${station.id}`}
-          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          Mở trang chi tiết <ExternalLink className="w-3 h-3" />
-        </Link>
-      </div>
+      <Link
+        to={`/stations/${station.id}`}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-sm shadow-primary/25 hover:bg-primary/90 active:scale-[0.98] transition-all"
+      >
+        <ExternalLink className="w-4 h-4" />
+        Mở trang chi tiết
+      </Link>
       <AQIChart station={station} />
       {onViewOnMap && (
         <button
