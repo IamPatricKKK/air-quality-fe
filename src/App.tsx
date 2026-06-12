@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -8,8 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useRealtime } from "@/hooks/useRealtime";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Header } from "@/components/dashboard/Header";
-import { Logo } from "@/components/Logo";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { MobileNav } from "@/components/dashboard/MobileNav";
 import { useUnreadCount } from "@/hooks/useAlerts";
@@ -73,80 +72,13 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** Global header — hidden on auth pages. On mobile, hidden on /home (Index has its own mobile header). */
-function GlobalHeader() {
-  const isMobile = useIsMobile();
-  const location = useLocation();
-  const hideOn = ['/auth', '/auth/forgot', '/auth/reset', '/auth/verify'];
-  if (hideOn.some(p => location.pathname.startsWith(p))) return null;
-  // On mobile, /home has its own header
-  if (isMobile && location.pathname === '/home') return null;
-
-  if (isMobile) {
-    return (
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 py-2.5">
-        <Logo size="sm" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="sticky top-0 z-50 px-8 md:px-12 lg:px-18">
-      <HeaderScrollWrapper />
-    </div>
-  );
-}
-
-function HeaderScrollWrapper() {
-  // Binary state: crossing the 10px threshold toggles "docked"; CSS handles
-  // the 2s ease both ways (no scroll-position interpolation).
-  const [docked, setDocked] = useState(false);
-
-  useEffect(() => {
-    const THRESHOLD = 10;
-    const onScroll = () => setDocked(window.scrollY > THRESHOLD);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const p = docked ? 1 : 0; // resting (0) → docked (1)
-
-  // 2s tween, applied via CSS transition (not scroll mapping).
-  const EASE = '2s cubic-bezier(0.22, 1, 0.36, 1)';
-
-  return (
-    <div
-      style={{
-        paddingTop: 10 + 10 * p,                // 10px → 20px
-        transition: `padding-top ${EASE}`,
-      }}
-    >
-      <div
-        className="vn-header will-change-transform mx-auto"
-        style={{
-          maxWidth: 1700 - 200 * p,             // full → ~1500px centered
-          background: `hsl(var(--card) / ${0.45 + 0.45 * p})`,
-          borderColor: `hsl(var(--border) / ${0.3 + 0.5 * p})`,
-          boxShadow: `inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 ${8 + 16 * p}px ${24 + 36 * p}px ${-12 + 6 * p}px hsl(220 30% 10% / ${0.1 + 0.32 * p})`,
-          transform: `scale(${1 - 0.012 * p})`,
-          transformOrigin: 'top center',
-          transition: `max-width ${EASE}, background ${EASE}, border-color ${EASE}, box-shadow ${EASE}, transform ${EASE}`,
-        }}
-      >
-        <Header />
-      </div>
-    </div>
-  );
-}
-
 /** Mobile-only bottom nav — shown on all pages except auth and landing. */
 function GlobalMobileNav() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { data: alertUnread } = useUnreadCount();
   const hideOn = ['/auth', '/'];
-  const isHidden = !isMobile || hideOn.some(p => location.pathname === p) || location.pathname.startsWith('/auth/') || location.pathname === '/home';
+  const isHidden = !isMobile || hideOn.some(p => location.pathname === p) || location.pathname.startsWith('/auth/') || location.pathname === '/home' || location.pathname === '/intro';
   if (isHidden) return null;
 
   // Determine active tab from route
@@ -169,6 +101,8 @@ function GlobalFooter() {
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
   if (pathname === '/auth' || pathname.startsWith('/auth/')) return null;
+  // Landing & Intro have their own LandingFooter built in.
+  if (pathname === '/' || pathname === '/intro') return null;
   const navVisible = isMobile && pathname !== '/' && pathname !== '/home';
   return (
     <div className={navVisible ? 'pb-16 safe-area-bottom' : undefined}>
@@ -205,7 +139,7 @@ export default function App() {
               <BrowserRouter>
                 <RealtimeBridge />
                 <GlobalAuthModal />
-                <GlobalHeader />
+                <SiteHeader />
                 <GlobalMobileNav />
                 <Suspense fallback={<RouteSkeleton />}>
                   <Routes>
