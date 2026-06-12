@@ -4,9 +4,11 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   vertical?: boolean;
+  /** 'light' renders white text for use on dark/navy backgrounds (the header). */
+  tone?: 'default' | 'light';
 }
 
-export function Logo({ size = 'md', showText = true, vertical = false }: LogoProps) {
+export function Logo({ size = 'md', showText = true, vertical = false, tone = 'default' }: LogoProps) {
   const iconSize = {
     sm: 'w-8 h-8',
     md: 'w-10 h-10',
@@ -51,23 +53,38 @@ export function Logo({ size = 'md', showText = true, vertical = false }: LogoPro
       {showText && (
         <div className={vertical ? 'text-center' : ''}>
           <h1
-            className={`${titleSize} leading-tight dark:text-[#3B82F6]`}
-            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 1000, color: '#1E56FD' }}
+            className={`${titleSize} leading-tight ${tone === 'light' ? '' : 'dark:text-[#3B82F6]'}`}
+            style={{
+              fontFamily: "'Playfair Display', Georgia, serif",
+              fontWeight: 1000,
+              color: tone === 'light' ? '#FFFFFF' : '#1E56FD',
+              ...(tone === 'light' ? { textShadow: '0 1px 2px rgba(0,0,0,0.35)' } : {}),
+            }}
           >
             Air Quality VN
           </h1>
           <p
             className={`${subSize} leading-tight inline-block`}
-            style={{
-              fontFamily: "'PT Serif Caption', Georgia, serif",
-              fontStyle: 'italic',
-              fontWeight: 400,
-              letterSpacing,
-              background: 'linear-gradient(90deg, #06B6D4 0%, #3B82F6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+            style={
+              tone === 'light'
+                ? {
+                    fontFamily: "'PT Serif Caption', Georgia, serif",
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    letterSpacing,
+                    color: 'rgba(255,255,255,0.8)',
+                  }
+                : {
+                    fontFamily: "'PT Serif Caption', Georgia, serif",
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    letterSpacing,
+                    background: 'linear-gradient(90deg, #06B6D4 0%, #3B82F6 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }
+            }
           >
             Theo dõi chất lượng không khí Việt Nam
           </p>
