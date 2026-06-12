@@ -1,10 +1,10 @@
 import { createPortal } from 'react-dom';
-import { Bell, LogOut, User, Settings, MapPin, ChevronDown, Info, Shield } from 'lucide-react';
+import { Bell, LogOut, User, Settings, MapPin, ChevronDown, Shield } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AlertPanel } from '@/components/dashboard/AlertPanel';
 import { motion } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
@@ -71,9 +71,22 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="px-4 md:px-6 h-16 flex items-center justify-between"
+      className="relative px-4 md:px-6 h-16 flex items-center justify-between"
     >
-      <Logo size="md" />
+      <Logo size="md" tone="light" />
+
+      {/* Contextual center nav (app pages; hidden on /home where region + live live) */}
+      <nav className={`absolute left-1/2 -translate-x-1/2 ${isHome ? 'hidden' : 'hidden xl:flex'} items-center gap-7`}>
+        <Link to="/home" className="text-sm font-medium text-white/85 hover:text-white transition-colors">
+          Bản đồ
+        </Link>
+        <Link to="/compare" className="text-sm font-medium text-white/85 hover:text-white transition-colors">
+          So sánh
+        </Link>
+        <Link to={user ? '/intro' : '/'} className="text-sm font-medium text-white/85 hover:text-white transition-colors">
+          Giới thiệu
+        </Link>
+      </nav>
 
       <div className="flex items-center gap-2">
         {/* Region selector — only on /home */}
@@ -112,16 +125,6 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
             Đang cập nhật trực tiếp
           </div>
         )}
-
-        {/* Giới thiệu — đã đăng nhập vào /intro, khách vào trang Landing */}
-        <button
-          onClick={() => navigate(user ? '/intro' : '/')}
-          className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-secondary text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          title="Giới thiệu"
-        >
-          <Info className="w-3.5 h-3.5" />
-          Giới thiệu
-        </button>
 
         {/* Notifications */}
         <button
