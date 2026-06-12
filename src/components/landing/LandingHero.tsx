@@ -15,7 +15,7 @@ interface LandingHeroProps {
   tag?: string;
 }
 
-const DEFAULT_HEADING = 'Thở khỏe mỗi ngày\nvới dữ liệu thời gian thực.';
+const DEFAULT_HEADING = 'Theo dõi chất lượng không khí ở khu vực của bạn';
 const DEFAULT_SUBTITLE =
   'Theo dõi AQI, PM2.5 và cảnh báo ô nhiễm theo thời gian thực cho mọi khu vực trên toàn quốc.';
 

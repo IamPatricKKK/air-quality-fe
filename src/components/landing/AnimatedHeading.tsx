@@ -36,23 +36,38 @@ export function AnimatedHeading({
       {lines.map((line, lineIndex) => {
         const lineOffset = charsBefore;
         charsBefore += line.length;
+        // Chars are grouped per word (nowrap) so the browser can only break
+        // at the plain-space text nodes between words — never mid-word.
+        const words = line.split(' ');
+        let pos = 0;
         return (
           <span key={lineIndex} className="block">
-            {Array.from(line).map((char, charIndex) => (
-              <span
-                key={charIndex}
-                className="inline-block"
-                style={{
-                  opacity: started ? 1 : 0,
-                  transform: started ? 'translateX(0)' : 'translateX(-18px)',
-                  transitionProperty: 'opacity, transform',
-                  transitionDuration: '500ms',
-                  transitionDelay: `${(lineOffset + charIndex) * charDelay}ms`,
-                }}
-              >
-                {char === ' ' ? ' ' : char}
-              </span>
-            ))}
+            {words.map((word, wordIndex) => {
+              const wordStart = pos;
+              pos += word.length + 1; // +1 = the space after this word
+              return (
+                <span key={wordIndex}>
+                  <span className="inline-block whitespace-nowrap">
+                    {Array.from(word).map((char, charIndex) => (
+                      <span
+                        key={charIndex}
+                        className="inline-block"
+                        style={{
+                          opacity: started ? 1 : 0,
+                          transform: started ? 'translateX(0)' : 'translateX(-18px)',
+                          transitionProperty: 'opacity, transform',
+                          transitionDuration: '500ms',
+                          transitionDelay: `${(lineOffset + wordStart + charIndex) * charDelay}ms`,
+                        }}
+                      >
+                        {char}
+                      </span>
+                    ))}
+                  </span>
+                  {wordIndex < words.length - 1 ? ' ' : null}
+                </span>
+              );
+            })}
           </span>
         );
       })}
