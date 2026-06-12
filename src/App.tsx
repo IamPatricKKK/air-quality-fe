@@ -10,6 +10,7 @@ import { useRealtime } from "@/hooks/useRealtime";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Header } from "@/components/dashboard/Header";
 import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/Footer";
 import { MobileNav } from "@/components/dashboard/MobileNav";
 import { useUnreadCount } from "@/hooks/useAlerts";
 import Index from "@/pages/Index";
@@ -163,6 +164,19 @@ function GlobalMobileNav() {
   );
 }
 
+/** Global footer — hidden on auth pages. Pads bottom on mobile pages that show the bottom nav. */
+function GlobalFooter() {
+  const isMobile = useIsMobile();
+  const { pathname } = useLocation();
+  if (pathname === '/auth' || pathname.startsWith('/auth/')) return null;
+  const navVisible = isMobile && pathname !== '/' && pathname !== '/home';
+  return (
+    <div className={navVisible ? 'pb-16 safe-area-bottom' : undefined}>
+      <Footer />
+    </div>
+  );
+}
+
 function GlobalAuthModal() {
   const { isOpen, closeAuthModal } = useAuthModal();
   return <AuthModal open={isOpen} onClose={closeAuthModal} />;
@@ -216,6 +230,7 @@ export default function App() {
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
+                <GlobalFooter />
               </BrowserRouter>
             </TooltipProvider>
             </AuthModalProvider>

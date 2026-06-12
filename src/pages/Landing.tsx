@@ -163,12 +163,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-border/50 py-6 text-center">
-        <p className="text-xs text-muted-foreground">
-        Air Quality VN — Theo dõi chất lượng không khí Việt Nam
-        </p>
-      </div>
     </div>
   );
 }
