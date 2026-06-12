@@ -75,8 +75,8 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
     >
       <Logo size="md" tone="light" />
 
-      {/* Contextual center nav (app pages; hidden on /home where region + live live) */}
-      <nav className={`absolute left-1/2 -translate-x-1/2 ${isHome ? 'hidden' : 'hidden xl:flex'} items-center gap-7`}>
+      {/* Contextual center nav — hiện ở mọi trang app (≥ xl) kể cả /home */}
+      <nav className="absolute left-1/2 -translate-x-1/2 hidden xl:flex items-center gap-7">
         <Link to="/home" className="text-sm font-medium text-white/85 hover:text-white transition-colors">
           Bản đồ
         </Link>
@@ -120,8 +120,8 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
 
         {/* Live indicator — only on /home */}
         {isHome && (
-          <div className="hidden lg:inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary/10 text-primary text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          <div className="hidden lg:inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-teal-400/15 border border-teal-300/30 text-teal-200 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-teal-300 animate-pulse shadow-[0_0_8px_2px_rgba(94,234,212,0.7)]" />
             Đang cập nhật trực tiếp
           </div>
         )}

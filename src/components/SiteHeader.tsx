@@ -28,8 +28,6 @@ export function SiteHeader() {
   const { pathname } = useLocation();
 
   if (pathname.startsWith('/auth')) return null;
-  // /home has its own mobile header (inside Index)
-  if (isMobile && pathname === '/home') return null;
 
   const overlay = OVERLAY_PATHS.includes(pathname);
 
@@ -134,13 +132,18 @@ function MobileBar({ overlay }: { overlay: boolean }) {
         style={{ background: 'rgba(0, 48, 73, 0.8)' }}
       >
         <Logo size="sm" tone="light" />
-        {overlay && (
+        {overlay ? (
           <button
             onClick={user ? () => navigate('/home') : openAuthModal}
             className="rounded-lg bg-white px-4 py-1.5 text-xs font-medium text-black transition-colors hover:bg-gray-100"
           >
             {user ? 'Bảng điều khiển' : 'Đăng nhập'}
           </button>
+        ) : (
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-300 text-[10px] font-semibold tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            LIVE
+          </div>
         )}
       </div>
     </div>
