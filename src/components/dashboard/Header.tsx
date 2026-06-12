@@ -14,6 +14,13 @@ import { useUnreadCount } from '@/hooks/useAlerts';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useState, useRef, useEffect } from 'react';
 
+/** Liên kết điều hướng giữa các trang dashboard (bản đồ + các phần tách riêng). */
+const DASHBOARD_NAV = [
+  { to: '/home', label: 'Tổng quan' },
+  { to: '/rankings', label: 'Xếp hạng' },
+  { to: '/local', label: 'Địa phương' },
+];
+
 const REGIONS = [
   { value: '', label: 'Tất cả khu vực' },
   { value: 'Việt Nam', label: '🇻🇳 Việt Nam' },
@@ -50,6 +57,11 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
 
   const isHome = location.pathname === '/home';
   const isLanding = location.pathname === '/';
+  // Hiện nav giữa trên các trang duyệt dữ liệu (gồm chi tiết trạm + so sánh).
+  const isDashboard =
+    DASHBOARD_NAV.some(item => item.to === location.pathname) ||
+    location.pathname.startsWith('/stations/') ||
+    location.pathname === '/compare';
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -69,9 +81,31 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="px-4 md:px-6 h-16 flex items-center justify-between"
+      className="relative px-4 md:px-6 h-16 flex items-center justify-between"
     >
       <Logo size="md" />
+
+      {/* Dashboard nav — căn giữa tuyệt đối theo toàn bộ chiều rộng header */}
+      {isDashboard && (
+        <nav className="absolute left-1/2 -translate-x-1/2 inset-y-0 hidden md:flex items-center gap-0.5">
+          {DASHBOARD_NAV.map(item => {
+            const active = location.pathname === item.to;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`inline-flex items-center h-8 px-3 rounded-lg text-sm font-medium transition-all duration-150 ${
+                  active
+                    ? 'text-foreground bg-secondary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/70'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       <div className="flex items-center gap-1.5">
 

@@ -155,7 +155,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
                     <X className="w-5 h-5" />
                   </button>
 
-                  <div className="flex justify-start mb-6">
+                  <div className="flex justify-center mb-6">
                     <Logo size="md" />
                   </div>
 

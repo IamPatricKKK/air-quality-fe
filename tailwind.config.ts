@@ -13,13 +13,13 @@ export default {
       },
     },
     fontFamily: {
-      /* DM Sans: clean, modern body text */
-      sans:    ['"DM Sans"', 'system-ui', 'sans-serif'],
-      body:    ['"DM Sans"', 'system-ui', 'sans-serif'],
-      /* Instrument Serif: editorial, authoritative display */
-      display: ['"Instrument Serif"', 'Georgia', 'serif'],
-      /* DM Mono: precision data readouts */
-      mono:    ['"DM Mono"', 'ui-monospace', 'monospace'],
+      /* Be Vietnam Pro: một họ font duy nhất, hỗ trợ tiếng Việt đầy đủ.
+         sans / body / display / mono đều trỏ về cùng một font để giao diện
+         đồng nhất; số liệu giữ canh lề bằng font-variant-numeric: tabular-nums. */
+      sans:    ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+      body:    ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+      display: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+      mono:    ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
     },
     extend: {
       colors: {

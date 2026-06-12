@@ -1,74 +1,45 @@
 import { Link, useLocation } from 'react-router-dom';
+import { scrollToTop } from '@/lib/smoothScroll';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
+  /** Giữ lại để tương thích các nơi đang gọi — chữ đã nằm sẵn trong ảnh logo. */
   showText?: boolean;
   vertical?: boolean;
 }
 
-export function Logo({ size = 'md', showText = true, vertical = false }: LogoProps) {
-  const iconSize = {
-    sm: 'w-7 h-7',
-    md: 'w-9 h-9',
-    lg: 'w-20 h-20',
-  }[size];
-
-  const titleSize = {
-    sm: 'text-sm',
-    md: 'text-xl',
-    lg: 'text-3xl',
-  }[size];
-
-  const subSize = {
-    sm: 'text-[9px]',
-    md: 'text-[10px]',
-    lg: 'text-xs',
+export function Logo({ size = 'md' }: LogoProps) {
+  /* Logo là ảnh ngang (đã có sẵn chữ "AIR QUALITY") → set chiều cao, rộng auto
+     để giữ đúng tỉ lệ trên mọi chỗ dùng. */
+  const logoHeight = {
+    sm: 'h-9',
+    md: 'h-12',
+    lg: 'h-24',
   }[size];
 
   const location = useLocation();
-  const scrollsToTop = location.pathname === '/home' || location.pathname === '/';
+  // Logo luôn về trang landing `/`. Khi đã ở `/` thì chỉ cuộn lên đầu trang.
+  const isLanding = location.pathname === '/';
 
   const handleClick = (e: React.MouseEvent) => {
-    if (scrollsToTop) {
+    if (isLanding) {
       e.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToTop();
     }
   };
 
   return (
     <Link
-      to="/home"
+      to="/"
       onClick={handleClick}
-      className={`${vertical ? 'flex flex-col items-center gap-2' : 'flex items-center gap-2.5'} no-underline group`}
+      aria-label="Air Quality VN"
+      className="inline-flex items-center no-underline group"
     >
       <img
-        src="/logo-icon.png"
-        alt="AirQualityVN"
-        className={`${iconSize} rounded-xl object-contain border border-border/50 shadow-sm transition-transform duration-200 group-hover:scale-[1.03]`}
+        src="/logo.png"
+        alt="Air Quality VN"
+        className={`${logoHeight} w-auto rounded-lg object-contain shadow-sm transition-transform duration-200 group-hover:scale-[1.03]`}
       />
-      {showText && (
-        <div className={vertical ? 'text-center' : ''}>
-          <h1
-            className={`${titleSize} leading-tight font-normal tracking-tight`}
-            style={{
-              fontFamily: "'Instrument Serif', Georgia, serif",
-              color: 'hsl(201 100% 14%)',
-            }}
-          >
-            Air Quality VN
-          </h1>
-          <p
-            className={`${subSize} leading-tight font-medium tracking-wide mt-px`}
-            style={{
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-              color: 'hsl(201 35% 52%)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            Theo dõi chất lượng không khí
-          </p>
-        </div>
-      )}
     </Link>
   );
 }

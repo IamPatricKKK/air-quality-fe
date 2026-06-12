@@ -30,7 +30,7 @@ export function createAqiPinIcon(aqi: number | null, isSelected = false): L.DivI
       justify-content: center;
       font-weight: 700;
       font-size: ${isSelected ? 14 : 12}px;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: 'Be Vietnam Pro', system-ui, sans-serif;
       border: 2px solid rgba(255,255,255,0.95);
       ${halo}
       transition: transform 0.15s ease;

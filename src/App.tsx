@@ -19,6 +19,8 @@ import { NetworkStatus } from "@/components/NetworkStatus";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthModalProvider, useAuthModal } from "@/hooks/useAuthModal";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { ScrollToTopOnNavigate, ScrollToTopButton } from "@/components/ScrollToTop";
+import { SmoothScroll } from "@/components/SmoothScroll";
 
 const StationDetailPage = lazy(() => import("@/pages/StationDetailPage"));
 const AlertSettings = lazy(() => import("@/pages/AlertSettings"));
@@ -32,6 +34,8 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const Landing = lazy(() => import("@/pages/Landing"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const ProfileSettings = lazy(() => import("@/pages/ProfileSettings"));
+const Rankings = lazy(() => import("@/pages/Rankings"));
+const LocalAqi = lazy(() => import("@/pages/LocalAqi"));
 
 const queryClient = new QueryClient();
 
@@ -180,21 +184,26 @@ export default function App() {
           <AuthProvider>
             <AuthModalProvider>
             <TooltipProvider>
+              <SmoothScroll />
               <NetworkStatus />
               <Toaster />
               <Sonner />
               <InstallPrompt />
               <BrowserRouter>
+                <ScrollToTopOnNavigate />
                 <RealtimeBridge />
                 <GlobalAuthModal />
                 <GlobalHeader />
                 <GlobalMobileNav />
+                <ScrollToTopButton />
                 <Suspense fallback={<RouteSkeleton />}>
                   <Routes>
                     {/* Landing — trang giới thiệu */}
                     <Route path="/" element={<Landing />} />
                     {/* Public — duyệt dữ liệu tự do, không cần đăng nhập */}
                     <Route path="/home" element={<Index />} />
+                    <Route path="/rankings" element={<Rankings />} />
+                    <Route path="/local" element={<LocalAqi />} />
                     <Route path="/stations/:id" element={<StationDetailPage />} />
                     <Route path="/compare" element={<Compare />} />
                     <Route path="/about" element={<About />} />

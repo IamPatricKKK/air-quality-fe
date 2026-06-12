@@ -283,7 +283,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
     const color = aqi >= 0 ? getAQIColorForRegion(aqi) : '#999';
 
     (layer as any).bindPopup(`
-      <div style="font-family: system-ui; min-width: 120px;">
+      <div style="font-family: 'Be Vietnam Pro', system-ui, sans-serif; min-width: 120px;">
         <p style="font-weight: bold; margin: 0 0 4px;">${name}</p>
         <p style="margin: 0; color: ${color}; font-weight: bold;">
           ${aqi >= 0 ? `AQI: ${aqi}` : 'N/A'}

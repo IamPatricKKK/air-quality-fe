@@ -1,9 +1,9 @@
 /* ─────────────────────────────────────────────────────────────
    DESIGN SYSTEM — Air Quality VN
    Palette:  Primary #003049 · Surface #fdf0d5 · Sky #669bbc · Ember #ff6b35
-   Fonts:    Instrument Serif (display) · DM Sans (body) · DM Mono (data)
+   Font:     Be Vietnam Pro — một họ font duy nhất, hỗ trợ tiếng Việt đầy đủ
    ───────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -14,6 +14,9 @@
    ══════════════════════════════════════════════════════════════ */
 @layer base {
   :root {
+    /* ── Font: một họ duy nhất cho toàn bộ giao diện ── */
+    --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+
     /* ── App & section backgrounds ── */
     --background:           0 0% 100%;    /* #ffffff — clean white */
     --bg-section:           210 40% 98%;  /* #f8fafc — soft cool section */
@@ -177,14 +180,20 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: var(--font-sans);
     @apply tracking-tight;
+  }
+
+  /* Mọi control kế thừa font từ body để đồng nhất (button/input/select/textarea
+     mặc định không kế thừa font-family của trình duyệt). */
+  button, input, select, textarea, optgroup {
+    font-family: inherit;
   }
 }
 
@@ -402,10 +411,10 @@
   }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* ─── DATA NUMBER (monospace AQI readout) ────────────────── */
+  /* ─── DATA NUMBER (AQI readout — canh lề số bằng tabular-nums) ─── */
   .data-number {
-    font-family: 'DM Mono', ui-monospace, monospace;
-    font-weight: 500;
+    font-family: var(--font-sans);
+    font-weight: 600;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
   }
@@ -452,7 +461,7 @@
   background: hsl(var(--card)) !important;
   color: hsl(var(--foreground)) !important;
   border-color: hsl(var(--border)) !important;
-  font-family: 'DM Sans', sans-serif !important;
+  font-family: var(--font-sans) !important;
 }
 
 .leaflet-popup-content-wrapper {

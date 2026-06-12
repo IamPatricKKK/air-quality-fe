@@ -18,11 +18,12 @@ export function MetricTile({ icon: Icon, label, value, unit, sub, accentClass }:
       </div>
       <div className="mt-2 flex items-baseline gap-1">
         <span
-          className={`leading-none font-medium ${accentClass ?? "text-foreground"}`}
+          className={`leading-none font-semibold ${accentClass ?? "text-foreground"}`}
           style={{
-            fontFamily: "'DM Mono', ui-monospace, monospace",
+            fontFamily: "var(--font-sans)",
             fontSize: '1.25rem',
             letterSpacing: '-0.02em',
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           {value}

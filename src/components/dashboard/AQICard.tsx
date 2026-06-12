@@ -37,7 +37,7 @@ export function AQICard({
       transition={{ delay: index * 0.04, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => onClick(station)}
       className={[
-        'ow-card relative overflow-hidden cursor-pointer group',
+        'ow-card relative overflow-hidden cursor-pointer group h-full flex flex-col',
         'transition-all duration-200 hover:-translate-y-0.5',
         'hover:border-border',
         isPinned ? 'ring-1 ring-primary/25 ring-offset-0' : '',
@@ -52,7 +52,7 @@ export function AQICard({
       />
 
       {/* Card body */}
-      <div className="p-4 pt-5">
+      <div className="p-4 pt-5 flex flex-col flex-1">
 
         {/* Header row: name + actions */}
         <div className="flex items-start justify-between gap-2 min-h-[20px]">
@@ -91,19 +91,20 @@ export function AQICard({
           </div>
         </div>
 
-        {/* Location */}
-        <p className="mt-1 text-[11px] text-muted-foreground/80 line-clamp-1">{station.region}</p>
+        {/* Location — always reserve one line so AQI blocks stay aligned across cards */}
+        <p className="mt-1 min-h-[16px] text-[11px] text-muted-foreground/80 line-clamp-1">{station.region || ' '}</p>
 
         {/* AQI number — dominant focal point */}
         <div className="mt-3.5 flex items-end justify-between gap-2">
           <div>
             <p className="section-label mb-1">AQI</p>
             <div
-              className="leading-none font-medium"
+              className="leading-none font-bold"
               style={{
-                fontFamily: "'DM Mono', ui-monospace, monospace",
+                fontFamily: "var(--font-sans)",
                 fontSize: '2.75rem',
                 letterSpacing: '-0.03em',
+                fontVariantNumeric: 'tabular-nums',
                 color: solid,
               }}
             >
@@ -118,11 +119,8 @@ export function AQICard({
           </span>
         </div>
 
-        {/* Divider */}
-        <div className="my-3 border-t border-border/50" />
-
-        {/* Secondary metrics */}
-        <div className="grid grid-cols-3 gap-0">
+        {/* Secondary metrics — anchored to the bottom so rows align across cards */}
+        <div className="mt-auto pt-3 border-t border-border/50 grid grid-cols-3 gap-0">
           <div>
             <p className="text-[10px] text-muted-foreground/80">PM2.5</p>
             <p className="mt-0.5 text-sm font-semibold text-foreground font-mono">{station.pm25}</p>

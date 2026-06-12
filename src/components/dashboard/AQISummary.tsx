@@ -95,12 +95,13 @@ export function AQISummary({ stations }: AQISummaryProps) {
 
           {/* Value — dominant focal point */}
           <div
-            className="mt-1 font-display leading-none"
+            className="mt-1 leading-none"
             style={{
-              fontFamily: "'DM Mono', ui-monospace, monospace",
+              fontFamily: "var(--font-sans)",
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 500,
+              fontWeight: 700,
               letterSpacing: '-0.02em',
+              fontVariantNumeric: 'tabular-nums',
               color: card.valueColor,
             }}
           >

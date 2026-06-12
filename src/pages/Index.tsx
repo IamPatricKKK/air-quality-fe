@@ -3,16 +3,12 @@ import { AQISummary } from '@/components/dashboard/AQISummary';
 import { AQICard } from '@/components/dashboard/AQICard';
 import { AQIMap } from '@/components/dashboard/AQIMap';
 import { SelectedStationPanel } from '@/components/dashboard/SelectedStationPanel';
-import { RegionTable } from '@/components/dashboard/RegionTable';
-import { WardAqiPanel } from '@/components/dashboard/WardAqiPanel';
 import { AlertPanel } from '@/components/dashboard/AlertPanel';
-import { SearchStation } from '@/components/dashboard/SearchStation';
 import { LocationPrompt } from '@/components/dashboard/LocationPrompt';
 import { MobileNav, MobileTab } from '@/components/dashboard/MobileNav';
 import { MobileSearchView } from '@/components/dashboard/MobileSearchView';
 import { MobileProfileView } from '@/components/dashboard/MobileProfileView';
 import {
-  AQISummarySkeleton,
   StationCardSkeleton,
   MapSkeleton,
   SelectedStationSkeleton,
@@ -155,7 +151,6 @@ const Index = () => {
   if (isLoading && stations.length === 0) {
     return (
       <div className="min-h-screen bg-background p-3 md:p-4 lg:p-6 space-y-4">
-        <AQISummarySkeleton />
         <StationCardSkeleton count={5} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 h-[75vh] min-h-[520px]"><MapSkeleton /></div>
@@ -219,7 +214,7 @@ const Index = () => {
         <div className="px-3 py-3 space-y-3">
           {mobileTab === 'home' && (
             <>
-              {/* At-a-glance overview first */}
+              {/* Tổng quan: thẻ chỉ số (gộp từ trang Tổng quan) */}
               <AQISummary stations={stations} />
 
               <div className="flex items-center justify-between px-0.5">
@@ -232,7 +227,7 @@ const Index = () => {
                 className="grid grid-rows-1 grid-flow-col auto-cols-[200px] gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory -mx-3 px-3 py-1"
               >
                 {sortedStations.map((station, i) => (
-                  <div key={station.id} className="snap-start">
+                  <div key={station.id} className="snap-start h-full">
                     <AQICard
                       station={station}
                       onClick={handleMobileCardClick}
@@ -251,9 +246,6 @@ const Index = () => {
                   <SelectedStationPanel station={selectedStation} onViewOnMap={() => handleViewOnMap(selectedStation)} />
                 </div>
               )}
-
-              <RegionTable stations={stations} />
-              <WardAqiPanel />
             </>
           )}
 
@@ -284,22 +276,7 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-8">
       <div className="px-4 md:px-5 lg:px-7 pt-6 space-y-6">
 
-        {/* ── Dashboard page header ── */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold leading-tight text-foreground">
-              Quan trắc không khí
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md">
-              AQI & PM2.5 thời gian thực từ 50+ trạm quan trắc trên toàn quốc.
-            </p>
-          </div>
-          <div className="w-full md:w-72 lg:w-80 md:flex-shrink-0">
-            <SearchStation stations={stations} onSelect={setSelectedStation} />
-          </div>
-        </div>
-
-        {/* ── Metric summary cards ── */}
+        {/* ── Tổng quan: thẻ chỉ số (gộp từ trang Tổng quan) ── */}
         <AQISummary stations={stations} />
 
         {/* ── Station cards carousel ── */}
@@ -409,12 +386,6 @@ const Index = () => {
             {selectedStation && <SelectedStationPanel station={selectedStation} />}
           </div>
         </section>
-
-        {/* ── Data tables: regional ranking + local wards ── */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-          <RegionTable stations={stations} />
-          <WardAqiPanel />
-        </div>
 
         {/* ── Compare FAB ── */}
         {compare.ids.length >= 2 && (

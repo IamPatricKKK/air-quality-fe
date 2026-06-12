@@ -10,10 +10,8 @@ interface LandingHeroProps {
 const VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4';
 
-/** Center nav: section anchors + real routes (no dead links). */
+/** Center nav: real routes (no dead links). */
 const NAV_LINKS = [
-  { label: 'Tính năng', href: '#features' },
-  { label: 'Cách hoạt động', href: '#how-it-works' },
   { label: 'Bản đồ', to: '/home' },
   { label: 'Giới thiệu', to: '/about' },
 ];
@@ -42,8 +40,12 @@ export function LandingHero({ onExplore, onRegister }: LandingHeroProps) {
         {/* Navbar */}
         <div className="px-6 pt-6 md:px-12 lg:px-16">
           <nav className="liquid-glass flex items-center justify-between rounded-xl px-4 py-2">
-            <Link to="/" className="text-2xl font-semibold tracking-tight text-white">
-              AirQuality
+            <Link to="/" aria-label="Air Quality VN" className="inline-flex items-center no-underline group">
+              <img
+                src="/logo.png"
+                alt="Air Quality VN"
+                className="h-12 w-auto rounded-lg object-contain shadow-sm transition-transform duration-200 group-hover:scale-[1.03]"
+              />
             </Link>
 
             <div className="hidden items-center gap-8 md:flex">
