@@ -27,6 +27,7 @@ import type { StationWithReading } from '@/types';
 import { Search, X, GitCompare, Info, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
+import { SkyBackground } from '@/components/SkyBackground';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -218,7 +219,8 @@ const Index = () => {
   // Mobile layout
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background pb-16">
+      <div className="min-h-screen pb-16">
+        <SkyBackground />
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 py-2.5">
           <div className="flex items-center gap-2.5">
             <div className="flex-1 min-w-0">
@@ -327,7 +329,8 @@ const Index = () => {
 
   // Desktop layout
   return (
-    <div className="min-h-screen bg-background pb-6">
+    <div className="min-h-screen pb-6">
+      <SkyBackground />
 
       <div className="px-3 md:px-4 lg:px-6 pt-6 space-y-4">
 
