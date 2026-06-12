@@ -38,7 +38,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md glass-card p-8 text-center space-y-4">
           <div className="w-16 h-16 mx-auto rounded-full bg-destructive/20 flex items-center justify-center">
             <AlertCircle className="w-8 h-8 text-destructive" />
@@ -59,7 +59,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

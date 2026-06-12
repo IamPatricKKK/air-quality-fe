@@ -81,7 +81,7 @@ export default function Compare() {
   const isLoading = [historyA, historyB, historyC].some((q, i) => i < selectedStations.length && q.isLoading);
 
   return (
-    <div className="min-h-screen bg-background p-3 md:p-6 space-y-4 max-w-6xl mx-auto">
+    <div className="min-h-screen p-3 md:p-6 space-y-4 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <BackButton />
         {ids.length > 0 && (

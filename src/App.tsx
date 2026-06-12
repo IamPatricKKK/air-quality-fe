@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useRealtime } from "@/hooks/useRealtime";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SkyBackground } from "@/components/SkyBackground";
 import { Footer } from "@/components/Footer";
 import { MobileNav } from "@/components/dashboard/MobileNav";
 import { useUnreadCount } from "@/hooks/useAlerts";
@@ -103,12 +104,10 @@ function GlobalFooter() {
   if (pathname === '/auth' || pathname.startsWith('/auth/')) return null;
   // Landing & Intro have their own LandingFooter built in.
   if (pathname === '/' || pathname === '/intro') return null;
-  const navVisible = isMobile && pathname !== '/' && pathname !== '/home';
-  return (
-    <div className={navVisible ? 'pb-16 safe-area-bottom' : undefined}>
-      <Footer />
-    </div>
-  );
+  // Mobile: không render footer toàn cục — chỉ tab "Tổng quan" của /home có
+  // footer, do Index tự render (tab là state nội bộ, route không phân biệt).
+  if (isMobile) return null;
+  return <Footer />;
 }
 
 function GlobalAuthModal() {
@@ -137,6 +136,8 @@ export default function App() {
               <Sonner />
               <InstallPrompt />
               <BrowserRouter>
+                {/* Global ambient sky — pages with an opaque wrapper (Landing, Intro) cover it */}
+                <SkyBackground />
                 <RealtimeBridge />
                 <GlobalAuthModal />
                 <SiteHeader />

@@ -35,7 +35,7 @@ export default function StationDetailPage() {
 
   if (!station) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen p-6">
         <BackButton />
         <div className="mt-8 glass-card p-8 text-center">
           <h1 className="text-xl font-semibold">Không tìm thấy trạm</h1>
@@ -48,9 +48,9 @@ export default function StationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-6 flow-root">
-      {/* Sky hero — bleeds up behind the floating header (no two-tone seam) */}
-      <div className="sky-hero px-3 md:px-6 pb-12 under-header">
+    <div className="min-h-screen pb-20 md:pb-6 flow-root">
+      {/* Hero floats directly on the global photographic sky backdrop */}
+      <div className="px-3 md:px-6 pb-12 under-header">
         <div className="max-w-4xl mx-auto space-y-4 pt-3">
           <BackButton />
 

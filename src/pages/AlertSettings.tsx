@@ -65,7 +65,7 @@ export default function AlertSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-3 md:p-6 space-y-4 max-w-3xl mx-auto">
+    <div className="min-h-screen p-3 md:p-6 space-y-4 max-w-3xl mx-auto">
       <BackButton />
 
       <div className="flex items-center justify-between">

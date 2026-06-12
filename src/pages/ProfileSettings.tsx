@@ -55,7 +55,7 @@ export default function ProfileSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-3 md:p-6 pb-20 md:pb-6 max-w-2xl mx-auto space-y-4">
+    <div className="min-h-screen p-3 md:p-6 pb-20 md:pb-6 max-w-2xl mx-auto space-y-4">
       <BackButton />
 
       <div>

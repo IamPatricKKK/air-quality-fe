@@ -84,7 +84,7 @@ export default function AlertHistory({ inline }: { inline?: boolean } = {}) {
   }, [base, filter]);
 
   return (
-    <div className={`${inline ? '' : 'min-h-screen pb-20 md:pb-6'} bg-background p-3 md:p-6 space-y-4 max-w-4xl mx-auto`}>
+    <div className={`${inline ? '' : 'min-h-screen pb-20 md:pb-6'} p-3 md:p-6 space-y-4 max-w-4xl mx-auto`}>
       {!inline && (
         <div className="flex items-center justify-between">
           <BackButton />

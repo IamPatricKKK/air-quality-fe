@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AQISummary } from '@/components/dashboard/AQISummary';
 import { AQICard } from '@/components/dashboard/AQICard';
-import { AQIMap } from '@/components/dashboard/AQIMap';
+import { AQIMap, type RegionFocus } from '@/components/dashboard/AQIMap';
 import { SelectedStationPanel } from '@/components/dashboard/SelectedStationPanel';
 import { RegionTable } from '@/components/dashboard/RegionTable';
 import { WardAqiPanel } from '@/components/dashboard/WardAqiPanel';
@@ -24,10 +24,11 @@ import { usePinnedStations } from '@/hooks/usePinnedStations';
 import { useCompareStations } from '@/hooks/useCompareStations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { StationWithReading } from '@/types';
-import { Search, X, GitCompare, Info, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { WardAqi } from '@/api/wards';
+import { locateWard } from '@/lib/wardLocator';
+import { Search, X, GitCompare, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Footer } from '@/components/Footer';
 import { Link, useLocation } from 'react-router-dom';
-import { Logo } from '@/components/Logo';
-import { SkyBackground } from '@/components/SkyBackground';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -143,6 +144,24 @@ const Index = () => {
   }, []);
 
   const [forceFly, setForceFly] = useState(false);
+  const [regionFocus, setRegionFocus] = useState<RegionFocus | null>(null);
+
+  /** Bấm xã/phường ở panel địa phương → bay tới khu vực đó trên bản đồ. */
+  const handleWardSelect = useCallback(async (ward: WardAqi) => {
+    const pos = await locateWard(ward);
+    if (!pos) {
+      toast.warning('Chưa định vị được địa phương này trên bản đồ.');
+      return;
+    }
+    setRegionFocus({ ...pos, zoom: 11, nonce: Date.now() });
+    if (isMobile) {
+      setMobileTab('map');
+    } else {
+      setTimeout(() => {
+        mapSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [isMobile]);
 
   const handleViewOnMap = useCallback((station: StationWithReading) => {
     setSelectedStation(station);
@@ -187,7 +206,7 @@ const Index = () => {
 
   if (isLoading && stations.length === 0) {
     return (
-      <div className="min-h-screen bg-background p-3 md:p-4 lg:p-6 space-y-4">
+      <div className="min-h-screen p-3 md:p-4 lg:p-6 space-y-4">
         <AQISummarySkeleton />
         <StationCardSkeleton count={5} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -204,7 +223,7 @@ const Index = () => {
 
   if (!isLoading && stations.length === 0) {
     return (
-      <div className="min-h-screen bg-background px-4 py-12 md:px-6">
+      <div className="min-h-screen px-4 py-12 md:px-6">
         <div className="mx-auto max-w-2xl glass-card p-8 text-center">
           <p className="text-sm uppercase tracking-[0.24em] text-primary/70">Live Data Only</p>
           <h1 className="mt-3 text-3xl font-display font-bold text-foreground">Chưa có dữ liệu quan trắc trong DB</h1>
@@ -220,35 +239,12 @@ const Index = () => {
   if (isMobile) {
     return (
       <div className="min-h-screen pb-16">
-        <SkyBackground />
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 py-2.5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex-1 min-w-0">
-              <Logo size="sm" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Link
-                to="/"
-                className="p-2 rounded-xl bg-secondary/80 text-muted-foreground hover:text-foreground active:scale-95 transition-all"
-                title="Giới thiệu"
-              >
-                <Info className="w-4 h-4" />
-              </Link>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold tracking-wide">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                LIVE
-              </div>
-            </div>
-          </div>
-        </div>
-
+        {/* Header: global SiteHeader (navy glass island) renders above this page */}
         <div className="px-3 py-3 space-y-3">
           {mobileTab === 'home' && (
             <>
-              {/* Intro section */}
-              <div className="relative overflow-hidden rounded-2xl sky-hero border border-white/40 dark:border-white/10 p-4 shadow-sm">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/15 rounded-full -translate-y-8 translate-x-8" />
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-6 -translate-x-6" />
+              {/* Intro section — glass card floating on the sky backdrop */}
+              <div className="relative overflow-hidden ow-card-glass p-4">
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -296,17 +292,20 @@ const Index = () => {
               )}
               <AQISummary stations={stations} />
               <RegionTable stations={stations} />
-              <WardAqiPanel />
+              <WardAqiPanel onSelectWard={handleWardSelect} />
             </>
           )}
 
           {mobileTab === 'map' && (
-            <div className="h-[calc(100vh-140px)] -mx-3 -mt-3">
+            /* Fixed giữa header (≈68px) và bottom nav (64px): vừa khít mọi
+               màn hình, không phụ thuộc 100vh (lệch trên iOS) hay scroll. */
+            <div className="fixed inset-x-0 top-[68px] bottom-16">
               <AQIMap
                 stations={stations}
                 selectedStation={selectedStation}
                 onSelectStation={setSelectedStation}
                 forceFly={forceFly}
+                regionFocus={regionFocus}
               />
             </div>
           )}
@@ -316,6 +315,9 @@ const Index = () => {
           )}
 
         </div>
+
+        {/* Footer chỉ ở tab Tổng quan (các tab bản đồ/tra cứu không cần) */}
+        {mobileTab === 'home' && <Footer />}
 
         <LocationPrompt />
         <MobileNav
@@ -330,7 +332,6 @@ const Index = () => {
   // Desktop layout
   return (
     <div className="min-h-screen pb-6">
-      <SkyBackground />
 
       <div className="px-3 md:px-4 lg:px-6 pt-6 space-y-4">
 
@@ -340,7 +341,7 @@ const Index = () => {
           <h1 className="text-2xl md:text-3xl font-bold font-display text-foreground">
             Bảng tổng quan
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-sm text-foreground/70 mt-1.5">
             Theo dõi AQI &amp; PM2.5 thời gian thực từ 50+ trạm quan trắc trên toàn quốc.
           </p>
         </div>
@@ -423,6 +424,7 @@ const Index = () => {
             selectedStation={selectedStation}
             onSelectStation={setSelectedStation}
             forceFly={forceFly}
+            regionFocus={regionFocus}
           />
         </div>
         <div className="lg:col-span-1 space-y-4">
@@ -432,7 +434,7 @@ const Index = () => {
 
       <RegionTable stations={stations} />
 
-      <WardAqiPanel />
+      <WardAqiPanel onSelectWard={handleWardSelect} />
 
       {compare.ids.length >= 2 && (
         <Link

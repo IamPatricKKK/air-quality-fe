@@ -63,7 +63,7 @@ const DATA_SOURCES = [
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-background p-3 md:p-6 max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen p-3 md:p-6 max-w-6xl mx-auto space-y-6">
       <BackButton />
 
       {/* Hero */}
