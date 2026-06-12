@@ -13,7 +13,11 @@ interface AQILegendProps {
 }
 
 export function AQILegend({ className = '' }: AQILegendProps) {
-  const [expanded, setExpanded] = useState(true);
+  // Mobile: gập mặc định — bảng mở cao ~230px che đúng cụm trạm miền Nam.
+  // Đọc thẳng innerWidth lúc khởi tạo (useIsMobile trả undefined ở render đầu).
+  const [expanded, setExpanded] = useState(
+    () => typeof window === 'undefined' || window.innerWidth >= 768,
+  );
 
   return (
     <div

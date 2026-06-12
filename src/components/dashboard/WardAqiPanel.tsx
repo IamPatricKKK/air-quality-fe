@@ -12,7 +12,12 @@ import type { WardAqi } from '@/api/wards';
  * trạm thật → DB → air-quality-api). KHÔNG phải trạm trên bản đồ, KHÔNG
  * gọi API ngoài. Chỉ hiển thị địa phương đã có kết quả phân tích.
  */
-export function WardAqiPanel() {
+interface WardAqiPanelProps {
+  /** Bấm một xã/phường → bay tới khu vực đó trên bản đồ (chế độ "Khu vực"). */
+  onSelectWard?: (ward: WardAqi) => void;
+}
+
+export function WardAqiPanel({ onSelectWard }: WardAqiPanelProps) {
   const { data, isLoading, error } = useWardAqi();
   const [search, setSearch] = useState('');
   const [openProvinces, setOpenProvinces] = useState<Record<string, boolean>>({});
@@ -134,7 +139,9 @@ export function WardAqiPanel() {
                         return (
                           <tr
                             key={w.id}
-                            className="border-b border-border/20 last:border-b-0 hover:bg-secondary/30"
+                            onClick={() => onSelectWard?.(w)}
+                            title={onSelectWard ? 'Xem khu vực này trên bản đồ' : undefined}
+                            className={`border-b border-border/20 last:border-b-0 hover:bg-secondary/30 ${onSelectWard ? 'cursor-pointer' : ''}`}
                           >
                             <td className="px-4 py-2 text-foreground">{w.name}</td>
                             <td className="px-3 py-2 text-center">

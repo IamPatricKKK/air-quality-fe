@@ -54,6 +54,9 @@ function FlyToStation({ station, stations, forceFly }: { station: Station | null
           map.setView([stations[0].lat, stations[0].lng], 8, { animate: false });
           return;
         }
+        // Padding vừa đủ cho bán kính marker — đừng tăng thêm: padding lớn
+        // làm fitBounds tụt một nấc zoom, VN thu nhỏ giữa khung. (Vụ trạm
+        // Cà Mau bị cắt trước đây là do card overflow, đã sửa bằng flex.)
         map.fitBounds(
           L.latLngBounds(stations.map(({ lat, lng }) => [lat, lng] as [number, number])),
           { padding: [32, 32], maxZoom: 6, animate: false }
@@ -162,17 +165,42 @@ function ZoomWatcher({ onZoomChange }: ZoomWatcherProps) {
   return null;
 }
 
+/** Yêu cầu bay tới một khu vực (xã/phường) ở chế độ "Khu vực". */
+export interface RegionFocus {
+  lat: number;
+  lng: number;
+  zoom?: number;
+  /** Đổi giá trị mỗi lần bấm để cùng một xã vẫn fly lại được. */
+  nonce: number;
+}
+
+function FlyToRegion({ focus }: { focus: RegionFocus | null | undefined }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!focus) return;
+    map.flyTo([focus.lat, focus.lng], focus.zoom ?? 11, { duration: 1.2 });
+  }, [map, focus]);
+  return null;
+}
+
 interface AQIMapProps {
   stations: Station[];
   selectedStation: Station | null;
   onSelectStation: (station: Station) => void;
   forceFly?: boolean;
+  /** Khi đặt giá trị → chuyển sang chế độ "Khu vực" và bay tới toạ độ này. */
+  regionFocus?: RegionFocus | null;
 }
 
-export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }: AQIMapProps) {
+export function AQIMap({ stations, selectedStation, onSelectStation, forceFly, regionFocus }: AQIMapProps) {
   const { resolvedTheme } = useTheme();
   const tileUrl = resolvedTheme === 'dark' ? TILE_DARK : TILE_LIGHT;
   const [viewMode, setViewMode] = useState<MapViewMode>('stations');
+
+  // Bấm một xã/phường ở panel địa phương → tự chuyển sang chế độ "Khu vực"
+  useEffect(() => {
+    if (regionFocus) setViewMode('regions');
+  }, [regionFocus]);
   const [provincesGeo, setProvincesGeo] = useState<FeatureCollection | null>(null);
   const [wardsGeo, setWardsGeo] = useState<FeatureCollection | null>(null);
   const [currentZoom, setCurrentZoom] = useState(6);
@@ -339,7 +367,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.2 }}
-      className="glass-card overflow-hidden h-full"
+      className="glass-card overflow-hidden h-full flex flex-col"
     >
       <div className="px-4 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
         <div>
@@ -381,7 +409,10 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
           </button>
         </div>
       </div>
-      <div className="h-[calc(100%-52px)] relative">
+      {/* flex-1 thay cho calc(100%-52px): header mobile cao 2 hàng (~85px)
+          làm map tràn đáy card và bị overflow-hidden cắt mất legend + trạm
+          phía nam. Flex tự co giãn đúng với mọi chiều cao header. */}
+      <div className="flex-1 min-h-0 relative">
         <MapContainer
           center={[16.0, 106.0]}
           zoom={6}
@@ -393,6 +424,7 @@ export function AQIMap({ stations, selectedStation, onSelectStation, forceFly }:
         >
           <TileLayer key={tileUrl} url={tileUrl} />
           <FlyToStation station={selectedStation} stations={mappableStations} forceFly={forceFly} />
+          <FlyToRegion focus={regionFocus} />
           <ZoomWatcher onZoomChange={setCurrentZoom} />
           <ViewModeRefresh viewMode={viewMode} />
           <MapReadySignal />
