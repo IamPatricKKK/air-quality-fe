@@ -21,14 +21,13 @@ import { useStations } from '@/hooks/useStations';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useUnreadCount } from '@/hooks/useAlerts';
 import { usePinnedStations } from '@/hooks/usePinnedStations';
-import { useCompareStations } from '@/hooks/useCompareStations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { StationWithReading } from '@/types';
 import type { WardAqi } from '@/api/wards';
 import { locateWard } from '@/lib/wardLocator';
-import { Search, X, GitCompare, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Footer } from '@/components/Footer';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -36,18 +35,9 @@ const Index = () => {
   const { data: notifications } = useNotifications();
   const { data: alertUnread } = useUnreadCount();
   const { pinnedIds, togglePin, isPinned } = usePinnedStations();
-  const compare = useCompareStations();
   const isMobile = useIsMobile();
   const location = useLocation();
 
-  const handleToggleCompare = (stationId: string) => {
-    const result = compare.toggle(stationId);
-    if (!result.ok && result.reason === 'limit') {
-      toast.warning(`Chỉ so sánh được tối đa ${compare.max} trạm`, {
-        description: 'Bỏ một trạm trước khi thêm trạm mới.',
-      });
-    }
-  };
   const [selectedStation, setSelectedStation] = useState<StationWithReading | null>(null);
   const stationPanelRef = useRef<HTMLDivElement>(null);
   const mapSectionRef = useRef<HTMLDivElement>(null);
@@ -113,9 +103,9 @@ const Index = () => {
     });
   }, [stations]);
 
-  // Handle navigation state (viewOnMap, tab)
+  // Handle navigation state (viewOnMap, tab, scrollTo)
   useEffect(() => {
-    const state = location.state as { viewOnMap?: string; tab?: string } | null;
+    const state = location.state as { viewOnMap?: string; tab?: string; scrollTo?: string } | null;
     if (!state) return;
 
     if (state.viewOnMap && stations.length) {
@@ -130,6 +120,21 @@ const Index = () => {
 
     if (state.tab) {
       setMobileTab(state.tab as MobileTab);
+    }
+
+    if (state.scrollTo) {
+      const id = state.scrollTo;
+      // Đợi layout render xong rồi mới cuộn tới section.
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (id === 'stations') {
+            el.classList.add('section-highlight');
+            window.setTimeout(() => el.classList.remove('section-highlight'), 1600);
+          }
+        }
+      }, 300);
     }
 
     // Clear state so it doesn't re-trigger
@@ -276,8 +281,6 @@ const Index = () => {
                       index={Math.min(i, 8)}
                       isPinned={isPinned(station.id)}
                       onTogglePin={togglePin}
-                      isCompared={compare.isCompared(station.id)}
-                      onToggleCompare={handleToggleCompare}
                     />
                   </div>
                 ))}
@@ -353,9 +356,12 @@ const Index = () => {
       <AQISummary stations={stations} />
 
       {/* Station cards — swipeable carousel (all stations) */}
-      <div className="space-y-3">
+      <div id="stations" className="space-y-3 scroll-mt-20 rounded-xl transition-shadow">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg md:text-xl font-bold font-display text-foreground">Trạm quan trắc</h2>
+          <h2 className="flex items-center gap-2.5 text-lg md:text-xl font-bold font-display text-foreground">
+            <span className="inline-block w-1.5 h-6 rounded-full bg-primary" />
+            Trạm quan trắc
+          </h2>
           <div className="flex items-center gap-2 sm:gap-3">
             {pinnedIds.length > 0 && (
               <span className="hidden lg:inline text-[10px] text-muted-foreground">{pinnedIds.length} trạm đã ghim</span>
@@ -408,8 +414,6 @@ const Index = () => {
                   index={Math.min(i, 8)}
                   isPinned={isPinned(station.id)}
                   onTogglePin={togglePin}
-                  isCompared={compare.isCompared(station.id)}
-                  onToggleCompare={handleToggleCompare}
                 />
               </div>
             ))}
@@ -417,7 +421,7 @@ const Index = () => {
         )}
       </div>
 
-      <div ref={mapSectionRef} className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:items-start scroll-mt-20">
+      <div id="map" ref={mapSectionRef} className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:items-start scroll-mt-20">
         <div className="lg:col-span-2 lg:sticky lg:top-24 h-[60vh] lg:h-[calc(100vh-7rem)] min-h-[520px]">
           <AQIMap
             stations={stations}
@@ -435,16 +439,6 @@ const Index = () => {
       <RegionTable stations={stations} />
 
       <WardAqiPanel onSelectWard={handleWardSelect} />
-
-      {compare.ids.length >= 2 && (
-        <Link
-          to="/compare"
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-orange-500 text-white shadow-2xl shadow-orange-500/30 hover:bg-orange-600 transition-all"
-        >
-          <GitCompare className="w-4 h-4" />
-          <span className="text-sm font-medium">So sánh {compare.ids.length} trạm</span>
-        </Link>
-      )}
 
       <LocationPrompt />
       <AlertPanel open={alertsOpen} onClose={() => setAlertsOpen(false)} notifications={notifications} />

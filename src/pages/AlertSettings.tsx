@@ -29,7 +29,7 @@ const OPERATORS = [
   { value: "lt", label: "<" },
 ];
 
-export default function AlertSettings() {
+export default function AlertSettings({ inline }: { inline?: boolean } = {}) {
   const { data: rules, isLoading } = useAlertRules();
   const { data: stations } = useStations();
   const createRule = useCreateRule();
@@ -65,17 +65,19 @@ export default function AlertSettings() {
   };
 
   return (
-    <div className="min-h-screen p-3 md:p-6 space-y-4 max-w-3xl mx-auto">
-      <BackButton />
+    <div className={inline ? "space-y-4" : "min-h-screen p-3 md:p-6 space-y-4 max-w-3xl mx-auto"}>
+      {!inline && <BackButton />}
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-display font-bold text-foreground">Cài đặt cảnh báo</h1>
+          <h2 className={inline ? "text-base font-display font-bold text-foreground" : "text-xl font-display font-bold text-foreground"}>
+            Cảnh báo theo ngưỡng tùy chỉnh
+          </h2>
           <p className="text-xs text-muted-foreground mt-1">Tạo rule để nhận cảnh báo khi chỉ số vượt ngưỡng.</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 shrink-0"
         >
           <Plus className="w-3.5 h-3.5" /> Thêm rule
         </button>

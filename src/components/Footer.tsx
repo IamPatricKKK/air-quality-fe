@@ -17,7 +17,6 @@ export function Footer() {
 
   const explore: FooterLink[] = [
     { label: 'Bảng điều khiển', to: '/home' },
-    { label: 'So sánh khu vực', to: '/compare' },
     { label: 'Giới thiệu', to: user ? '/intro' : '/' },
   ];
 
@@ -74,10 +73,6 @@ export function Footer() {
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 sm:hidden">
               <Link to="/about" className="text-xs font-medium text-foreground/70 hover:text-foreground transition-colors">
                 Về dự án
-              </Link>
-              <span className="text-border">·</span>
-              <Link to="/compare" className="text-xs font-medium text-foreground/70 hover:text-foreground transition-colors">
-                So sánh khu vực
               </Link>
               <span className="text-border">·</span>
               <a

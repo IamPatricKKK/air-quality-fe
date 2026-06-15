@@ -22,9 +22,7 @@ import { AuthModalProvider, useAuthModal } from "@/hooks/useAuthModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 
 const StationDetailPage = lazy(() => import("@/pages/StationDetailPage"));
-const AlertSettings = lazy(() => import("@/pages/AlertSettings"));
 const AlertHistory = lazy(() => import("@/pages/AlertHistory"));
-const Compare = lazy(() => import("@/pages/Compare"));
 const About = lazy(() => import("@/pages/About"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -151,13 +149,11 @@ export default function App() {
                     {/* Public — duyệt dữ liệu tự do, không cần đăng nhập */}
                     <Route path="/home" element={<Index />} />
                     <Route path="/stations/:id" element={<StationDetailPage />} />
-                    <Route path="/compare" element={<Compare />} />
                     <Route path="/about" element={<About />} />
                     {/* Cần đăng nhập — tính năng cá nhân hoá */}
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
                     <Route path="/notifications" element={<ProtectedRoute><AlertHistory /></ProtectedRoute>} />
-                    <Route path="/notifications/alerts" element={<ProtectedRoute><AlertSettings /></ProtectedRoute>} />
                     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                     <Route path="/auth/forgot" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
                     <Route path="/auth/reset" element={<AuthRoute><ResetPassword /></AuthRoute>} />

@@ -4,6 +4,7 @@ export interface AppUser {
   roles: string[];
   user_metadata: {
     display_name?: string;
+    auth_provider?: string;
   };
 }
 
@@ -98,6 +99,7 @@ export interface UserPreferences {
   favoriteRegions: string[];
   pushEnabled: boolean;
   emailEnabled: boolean;
+  dailyReportEnabled?: boolean;
   pinnedStationIds: string[];
   quietHoursEnabled?: boolean;
   quietHoursStartMin?: number;
@@ -105,5 +107,5 @@ export interface UserPreferences {
   location?: {
     lat: number;
     lng: number;
-  };
+  } | null;
 }

@@ -83,8 +83,8 @@ export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
                 </button>
               )}
               <button
-                onClick={() => { onClose(); navigate('/notifications/alerts', { state: { returnTab: 'alerts' } }); }}
-                title="Cài đặt cảnh báo"
+                onClick={() => { onClose(); navigate('/notifications', { state: { tab: 'settings' } }); }}
+                title="Cài đặt thông báo"
                 className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
               >
                 <Settings className="w-4 h-4 text-muted-foreground" />
@@ -191,7 +191,7 @@ export function AlertPanel({ open, onClose, inline }: AlertPanelProps) {
               <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 text-xs text-muted-foreground text-center">
                 Chưa có thông báo nào.
                 <br />
-                <button onClick={() => { onClose(); navigate('/notifications/alerts', { state: { returnTab: 'alerts' } }); }} className="text-primary hover:underline mt-1 inline-block">
+                <button onClick={() => { onClose(); navigate('/notifications', { state: { tab: 'settings' } }); }} className="text-primary hover:underline mt-1 inline-block">
                   Tạo rule cảnh báo
                 </button>
               </div>

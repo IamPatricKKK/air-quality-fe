@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/hooks/useAuthModal';
+import { useThemeToggle } from '@/hooks/useThemeToggle';
 import { Logo } from '@/components/Logo';
 import { Header } from '@/components/dashboard/Header';
 
@@ -14,7 +16,6 @@ const OVERLAY_NAV = [
   { label: 'Tính năng', href: '#features' },
   { label: 'Cách hoạt động', href: '#how-it-works' },
   { label: 'Bản đồ', to: '/home' },
-  { label: 'Giới thiệu', to: '/about' },
 ];
 
 /**
@@ -91,7 +92,11 @@ function MarketingBar() {
     : { label: 'Đăng nhập', onClick: openAuthModal };
 
   return (
-    <div className="flex items-center justify-between px-4 md:px-6 h-16">
+    <motion.div
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="flex items-center justify-between px-4 md:px-6 h-16"
+    >
       <Logo size="md" tone="light" />
 
       <nav className="hidden items-center gap-8 md:flex">
@@ -114,7 +119,7 @@ function MarketingBar() {
       >
         {cta.label}
       </button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -123,6 +128,7 @@ function MobileBar({ overlay }: { overlay: boolean }) {
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
   const navigate = useNavigate();
+  const toggleTheme = useThemeToggle();
   const posCls = overlay ? 'fixed inset-x-0 top-0' : 'sticky top-0';
 
   return (
@@ -140,10 +146,17 @@ function MobileBar({ overlay }: { overlay: boolean }) {
             {user ? 'Bảng điều khiển' : 'Đăng nhập'}
           </button>
         ) : (
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-300 text-[10px] font-semibold tracking-wide">
+          // Chỉ báo LIVE — đồng thời là gesture ẩn: chạm để đổi giao diện sáng/tối
+          // (mobile không có nút theme trên header).
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Đổi giao diện sáng/tối"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-400/15 text-emerald-300 text-[10px] font-semibold tracking-wide active:scale-95 transition-transform"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             LIVE
-          </div>
+          </button>
         )}
       </div>
     </div>

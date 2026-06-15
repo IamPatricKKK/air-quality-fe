@@ -1,26 +1,30 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { BackButton } from "@/components/BackButton";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
   AlertCircle,
   XCircle,
   Bell,
+  Circle,
   CheckCheck,
-  Filter,
   Loader2,
   Settings,
   Megaphone,
 } from "lucide-react";
 import { useAlerts, useMarkAlertRead, useMarkAllRead, useUnreadCount } from "@/hooks/useAlerts";
-import { useNotifications } from "@/hooks/useNotifications";
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from "@/hooks/useNotifications";
+import { NotificationPreferences } from "@/components/dashboard/NotificationPreferences";
+import AlertSettings from "@/pages/AlertSettings";
 import { getAqiCategoryByCode } from "@/lib/aqi";
 import type { Alert } from "@/api/alerts";
 import type { UserNotification } from "@/types";
 
-type FilterValue = "all" | "unread" | "read";
-type CategoryValue = "all" | "alerts";
+type ViewValue = "all" | "unread" | "read" | "alerts" | "settings";
 
 type FeedItem =
   | { kind: "notification"; data: UserNotification }
@@ -51,8 +55,11 @@ export default function AlertHistory({ inline }: { inline?: boolean } = {}) {
   const { data: unread } = useUnreadCount();
   const markRead = useMarkAlertRead();
   const markAllRead = useMarkAllRead();
-  const [category, setCategory] = useState<CategoryValue>("all");
-  const [filter, setFilter] = useState<FilterValue>("all");
+  const markNotifRead = useMarkNotificationRead();
+  const markAllNotifsRead = useMarkAllNotificationsRead();
+  const location = useLocation();
+  const initialTab = (location.state as { tab?: ViewValue } | null)?.tab;
+  const [view, setView] = useState<ViewValue>(initialTab ?? "all");
 
   const isLoading = alertsLoading || notifsLoading;
 
@@ -61,111 +68,100 @@ export default function AlertHistory({ inline }: { inline?: boolean } = {}) {
   const totalCount = alerts.length + notifications.length;
   const totalUnread = unreadAlerts + unreadNotifs;
 
-  // Combined feed for the selected category, sorted newest first.
-  const base = useMemo<FeedItem[]>(() => {
+  // Combined feed (notifications + alerts) for non-settings views, sorted newest first.
+  const filtered = useMemo<FeedItem[]>(() => {
     const merged: FeedItem[] =
-      category === "alerts"
+      view === "alerts"
         ? alerts.map((a) => ({ kind: "alert", data: a }))
         : [
             ...notifications.map((n) => ({ kind: "notification" as const, data: n })),
             ...alerts.map((a) => ({ kind: "alert" as const, data: a })),
           ];
-    return merged.sort(
+    const sorted = merged.sort(
       (a, b) => new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime()
     );
-  }, [alerts, notifications, category]);
-
-  const baseUnread = base.filter((i) => !i.data.is_read).length;
-
-  const filtered = useMemo(() => {
-    if (filter === "unread") return base.filter((i) => !i.data.is_read);
-    if (filter === "read") return base.filter((i) => i.data.is_read);
-    return base;
-  }, [base, filter]);
+    if (view === "unread") return sorted.filter((i) => !i.data.is_read);
+    if (view === "read") return sorted.filter((i) => i.data.is_read);
+    return sorted;
+  }, [alerts, notifications, view]);
 
   return (
     <div className={`${inline ? '' : 'min-h-screen pb-20 md:pb-6'} p-3 md:p-6 space-y-4 max-w-4xl mx-auto`}>
-      {!inline && (
-        <div className="flex items-center justify-between">
-          <BackButton />
-          <Link
-            to="/notifications/alerts"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Settings className="w-3.5 h-3.5" /> Cài đặt rule
-          </Link>
-        </div>
-      )}
-
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-primary" />
-            <h1 className="text-xl font-display font-bold text-foreground">Thông báo</h1>
+        <div className="flex items-start gap-2">
+          <Bell className="w-5 h-5 text-primary mt-0.5" />
+          <div>
+            <h1 className="text-xl font-display font-bold text-foreground leading-tight">Thông báo</h1>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              {view === "settings"
+                ? 'Quản lý cách bạn nhận thông báo'
+                : totalCount > 0
+                  ? `${totalCount} thông báo · ${totalUnread} chưa đọc`
+                  : 'Chưa có thông báo nào'}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-            {totalCount > 0
-              ? `${totalCount} thông báo · ${totalUnread} chưa đọc`
-              : 'Chưa có thông báo nào'}
-          </p>
         </div>
-        {totalUnread > 0 && (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {view !== "settings" && totalUnread > 0 && (
+            <button
+              onClick={() => { markAllRead.mutate(); markAllNotifsRead.mutate(); }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+            >
+              <CheckCheck className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Đã đọc tất cả</span>
+            </button>
+          )}
           <button
-            onClick={() => markAllRead.mutate()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+            onClick={() => setView((v) => (v === "settings" ? "all" : "settings"))}
+            title="Cài đặt thông báo"
+            aria-label="Cài đặt thông báo"
+            className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
+              view === "settings"
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <CheckCheck className="w-3.5 h-3.5" />
-            Đã đọc tất cả
+            <Settings className="w-[18px] h-[18px]" />
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Category tabs: tất cả vs cảnh báo AQI */}
-      <div className="flex items-center gap-2">
+      {/* Tabs: tất cả · chưa đọc · đã đọc · cảnh báo (cài đặt là icon ở trên).
+          Mobile: 1 hàng cuộn ngang gọn; ≥ sm: tự xuống dòng. */}
+      {view !== "settings" && (
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap overflow-x-auto hide-scrollbar sm:flex-wrap -mx-3 px-3 sm:mx-0 sm:px-0">
         {([
           { value: "all", label: `Tất cả (${totalCount})`, icon: Bell },
+          { value: "unread", label: `Chưa đọc (${totalUnread})`, icon: Circle },
+          { value: "read", label: `Đã đọc (${totalCount - totalUnread})`, icon: CheckCheck },
           { value: "alerts", label: `Cảnh báo (${alerts.length})`, icon: AlertTriangle },
-        ] satisfies Array<{ value: CategoryValue; label: string; icon: typeof Bell }>).map((opt) => {
+        ] satisfies Array<{ value: ViewValue; label: string; icon: typeof Bell }>).map((opt) => {
           const Icon = opt.icon;
           return (
             <button
               key={opt.value}
-              onClick={() => setCategory(opt.value)}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                category === opt.value
+              onClick={() => setView(opt.value)}
+              className={`inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap rounded-lg font-medium transition-colors px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm ${
+                view === opt.value
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="hidden sm:block w-4 h-4" />
               {opt.label}
             </button>
           );
         })}
       </div>
+      )}
 
-      {/* Read-status filter pills */}
-      <div className="flex items-center gap-2">
-        <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-        {([
-          { value: "all", label: `Tất cả (${base.length})` },
-          { value: "unread", label: `Chưa đọc (${baseUnread})` },
-          { value: "read", label: `Đã đọc (${base.length - baseUnread})` },
-        ] satisfies Array<{ value: FilterValue; label: string }>).map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setFilter(opt.value)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              filter === opt.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
+      {view === "settings" ? (
+        <div className="space-y-6">
+          <NotificationPreferences />
+          <AlertSettings inline />
+        </div>
+      ) : (
+        <>
       {/* List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12 text-muted-foreground">
@@ -175,21 +171,21 @@ export default function AlertHistory({ inline }: { inline?: boolean } = {}) {
       ) : filtered.length === 0 ? (
         <div className="glass-card p-8 text-center space-y-2">
           <p className="text-sm text-foreground">
-            {filter === "unread"
+            {view === "unread"
               ? "Không có thông báo chưa đọc"
-              : filter === "read"
+              : view === "read"
                 ? "Chưa có thông báo nào đã đọc"
-                : category === "alerts"
+                : view === "alerts"
                   ? "Chưa có cảnh báo nào"
                   : "Chưa có thông báo nào"}
           </p>
-          {filter === "all" && category === "alerts" && (
-            <Link
-              to="/notifications/alerts"
+          {view === "alerts" && (
+            <button
+              onClick={() => setView("settings")}
               className="inline-block text-xs text-primary hover:underline"
             >
               Tạo rule cảnh báo →
-            </Link>
+            </button>
           )}
         </div>
       ) : (
@@ -205,7 +201,8 @@ export default function AlertHistory({ inline }: { inline?: boolean } = {}) {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay }}
-                  className={`glass-card p-4 border border-primary/20 ${!notif.is_read ? "ring-1 ring-primary/30" : "opacity-70"}`}
+                  onClick={() => { if (!notif.is_read) markNotifRead.mutate(notif.id); }}
+                  className={`glass-card p-4 border border-primary/20 cursor-pointer ${!notif.is_read ? "ring-1 ring-primary/30" : "opacity-70"}`}
                 >
                   <div className="flex items-start gap-3">
                     <Megaphone className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
@@ -292,6 +289,8 @@ export default function AlertHistory({ inline }: { inline?: boolean } = {}) {
             );
           })}
         </div>
+      )}
+        </>
       )}
     </div>
   );

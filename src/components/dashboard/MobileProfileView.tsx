@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/hooks/useAuthModal';
-import { User, Mail, MapPin, LogOut, Moon, Info, LogIn, UserPlus, Settings, ChevronRight } from 'lucide-react';
+import { User, Mail, MapPin, LogOut, Moon, Info, LogIn, UserPlus, Settings, ChevronRight, Loader2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationSettings } from '@/components/dashboard/NotificationSettings';
-import { getUserPreferences } from '@/api/profile';
+import { getUserPreferences, saveUserPreferences } from '@/api/profile';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 export function MobileProfileView() {
   const { user, signOut } = useAuth();
   const { openAuthModal } = useAuthModal();
   const [locationShared, setLocationShared] = useState<boolean | null>(null);
+  const [locationBusy, setLocationBusy] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   useEffect(() => {
@@ -40,6 +42,48 @@ export function MobileProfileView() {
       window.removeEventListener('location-saved', fetchLocation);
     };
   }, [user]);
+
+  const handleShareLocation = async () => {
+    if (!user) return;
+    setLocationBusy(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+      });
+      const { latitude: lat, longitude: lng } = position.coords;
+      await saveUserPreferences(user.id, { location: { lat, lng } });
+      setLocationShared(true);
+      window.dispatchEvent(new CustomEvent('location-saved'));
+      toast.success('Đã chia sẻ vị trí. Bạn sẽ nhận thông báo chất lượng không khí hằng ngày.');
+    } catch {
+      toast.error('Không lấy được vị trí. Vui lòng cho phép quyền vị trí trong trình duyệt.');
+    } finally {
+      setLocationBusy(false);
+    }
+  };
+
+  const handleUnshareLocation = async () => {
+    if (!user) return;
+    setLocationBusy(true);
+    try {
+      await saveUserPreferences(user.id, { location: null });
+      setLocationShared(false);
+      toast.success('Đã ngừng chia sẻ vị trí.');
+    } catch {
+      toast.error('Lỗi khi cập nhật vị trí.');
+    } finally {
+      setLocationBusy(false);
+    }
+  };
+
+  const handleToggleLocation = () => {
+    if (locationBusy || locationShared === null) return;
+    if (locationShared) handleUnshareLocation();
+    else handleShareLocation();
+  };
 
   // Guest view — not logged in
   if (!user) {
@@ -150,29 +194,44 @@ export function MobileProfileView() {
           </div>
           <ThemeToggle />
         </div>
-        <div className="flex items-center justify-between px-4 py-3.5">
+        <button
+          onClick={handleToggleLocation}
+          disabled={locationBusy || locationShared === null}
+          className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-secondary/20 transition-colors disabled:opacity-60"
+        >
           <div className="flex items-center gap-3">
             <MapPin className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-foreground">Vị trí</span>
+            <div className="text-left">
+              <span className="text-sm text-foreground block">Vị trí</span>
+              <span className="text-[11px] text-muted-foreground">
+                {locationShared
+                  ? 'Đang nhận thông báo khu vực của bạn'
+                  : 'Chia sẻ để nhận thông báo khu vực của bạn'}
+              </span>
+            </div>
           </div>
-          <span
-            className={`text-xs ${
-              locationShared === null
-                ? 'text-muted-foreground'
-                : locationShared
-                  ? 'text-primary'
-                  : 'text-muted-foreground'
-            }`}
-          >
-            {locationShared === null ? '…' : locationShared ? 'Đã chia sẻ' : 'Chưa chia sẻ'}
-          </span>
-        </div>
+          {locationBusy ? (
+            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+          ) : (
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                locationShared === null
+                  ? 'text-muted-foreground'
+                  : locationShared
+                    ? 'text-primary bg-primary/10'
+                    : 'text-primary-foreground bg-primary'
+              }`}
+            >
+              {locationShared === null ? '…' : locationShared ? 'Ngừng chia sẻ' : 'Chia sẻ'}
+            </span>
+          )}
+        </button>
       </motion.div>
 
       <NotificationSettings />
 
       <Link
-        to="/"
+        to="/intro"
         className="glass-card flex items-center justify-between px-4 py-3.5 hover:bg-secondary/20 transition-colors"
       >
         <div className="flex items-center gap-3">

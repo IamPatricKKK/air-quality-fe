@@ -37,7 +37,6 @@ const FEATURES = [
   "Bản đồ tương tác với 3 chế độ hiển thị: trạm quan trắc, heatmap và theo khu vực",
   "Dự báo chất lượng không khí 24 giờ tới bằng mô hình AI",
   "Lịch sử và xu hướng AQI trong 30 ngày",
-  "So sánh chất lượng không khí giữa nhiều khu vực cùng lúc",
   "Cảnh báo qua ứng dụng, email và push notification",
   "Khuyến nghị sức khoẻ chi tiết theo từng nhóm đối tượng",
   "Ước tính mức phơi nhiễm cá nhân (quy đổi tương đương điếu thuốc)",

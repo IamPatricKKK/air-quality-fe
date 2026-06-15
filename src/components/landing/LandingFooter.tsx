@@ -29,11 +29,6 @@ export function LandingFooter({ onRegister, loggedIn = false }: LandingFooterPro
                 </Link>
               </li>
               <li>
-                <Link to="/compare" className="text-muted-foreground hover:text-foreground transition-colors">
-                  So sánh trạm
-                </Link>
-              </li>
-              <li>
                 <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
                   Giới thiệu
                 </Link>

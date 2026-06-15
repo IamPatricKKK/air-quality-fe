@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Station, getAQILevel, getAQILabel } from '@/data/mockData';
 import { getAQIColors } from '@/utils/aqi';
-import { MapPin, Thermometer, Droplets, Pin, GitCompare, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { MapPin, Thermometer, Droplets, Pin, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface AQICardProps {
   station: Station;
@@ -9,8 +9,6 @@ interface AQICardProps {
   index: number;
   isPinned?: boolean;
   onTogglePin?: (stationId: string) => void;
-  isCompared?: boolean;
-  onToggleCompare?: (stationId: string) => void;
 }
 
 export function AQICard({
@@ -19,8 +17,6 @@ export function AQICard({
   index,
   isPinned,
   onTogglePin,
-  isCompared,
-  onToggleCompare,
 }: AQICardProps) {
   const level = getAQILevel(station.aqi);
   const { solid, tint } = getAQIColors(level);
@@ -34,7 +30,7 @@ export function AQICard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => onClick(station)}
-      className={`ow-card relative overflow-hidden p-4 pt-5 cursor-pointer hover:-translate-y-0.5 hover:border-primary/30 transition-all group ${isPinned ? 'ring-1 ring-primary/30' : ''} ${isCompared ? 'ring-1 ring-orange-500/50' : ''}`}
+      className={`ow-card relative overflow-hidden p-4 pt-5 cursor-pointer hover:-translate-y-0.5 hover:border-primary/30 transition-all group ${isPinned ? 'ring-1 ring-primary/30' : ''}`}
     >
       {/* Colored top accent */}
       <span className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: solid }} />
@@ -49,17 +45,8 @@ export function AQICard({
             {trend === 'down' && <TrendingDown className="w-4 h-4 text-emerald-500" />}
             {trend === 'stable' && <Minus className="w-4 h-4 text-muted-foreground" />}
           </span>
-          {/* Pin / compare actions on hover */}
+          {/* Pin action on hover */}
           <span className="hidden group-hover:flex items-center gap-1">
-            {onToggleCompare && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleCompare(station.id); }}
-                className={`p-1 rounded-md transition-all ${isCompared ? 'text-orange-500 bg-orange-500/10' : 'text-muted-foreground hover:text-foreground'}`}
-                title={isCompared ? 'Bỏ khỏi so sánh' : 'Thêm vào so sánh'}
-              >
-                <GitCompare className="w-3.5 h-3.5" />
-              </button>
-            )}
             {onTogglePin && (
               <button
                 onClick={(e) => { e.stopPropagation(); onTogglePin(station.id); }}

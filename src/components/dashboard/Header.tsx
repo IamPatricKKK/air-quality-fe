@@ -50,6 +50,22 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
 
   const isHome = location.pathname === '/home';
 
+  /** Cuộn mượt tới một section trên /home; nếu đang ở trang khác thì điều hướng về /home rồi cuộn. */
+  const scrollToSection = (id: string) => {
+    if (isHome) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (id === 'stations') {
+          el.classList.add('section-highlight');
+          window.setTimeout(() => el.classList.remove('section-highlight'), 1600);
+        }
+      }
+    } else {
+      navigate('/home', { state: { scrollTo: id } });
+    }
+  };
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (regionRef.current && !regionRef.current.contains(e.target as Node)) {
@@ -77,12 +93,18 @@ export function Header({ selectedRegion = '', onRegionChange }: HeaderProps) {
 
       {/* Contextual center nav — hiện ở mọi trang app (≥ xl) kể cả /home */}
       <nav className="absolute left-1/2 -translate-x-1/2 hidden xl:flex items-center gap-7">
-        <Link to="/home" className="text-sm font-medium text-white/85 hover:text-white transition-colors">
+        <button
+          onClick={() => scrollToSection('stations')}
+          className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+        >
+          Tổng quan
+        </button>
+        <button
+          onClick={() => scrollToSection('map')}
+          className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+        >
           Bản đồ
-        </Link>
-        <Link to="/compare" className="text-sm font-medium text-white/85 hover:text-white transition-colors">
-          So sánh
-        </Link>
+        </button>
         <Link to={user ? '/intro' : '/'} className="text-sm font-medium text-white/85 hover:text-white transition-colors">
           Giới thiệu
         </Link>

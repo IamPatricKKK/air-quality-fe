@@ -42,6 +42,11 @@ function persistSession(payload: AuthResponse) {
   localStorage.setItem(SESSION_KEY, JSON.stringify(payload.session));
 }
 
+/** Cập nhật user đã lưu (vd sau khi đổi tên hiển thị) mà không cần đăng nhập lại. */
+export function persistUser(user: AppUser) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
 export async function signIn(payload: AuthPayload) {
   const result = await airQualityApiRequest<AuthResponse>("/auth/login", {
     method: "POST",

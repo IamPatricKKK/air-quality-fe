@@ -6,7 +6,7 @@ import { User, Lock, Eye, EyeOff, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const isOAuth = user?.user_metadata?.auth_provider !== 'local';
 
   const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || '');
@@ -23,7 +23,10 @@ export default function ProfileSettings() {
     if (!displayName.trim()) return toast.error('Tên hiển thị không được trống');
     setSavingName(true);
     try {
-      await updateDisplayName(displayName.trim());
+      const res = await updateDisplayName(displayName.trim());
+      // Cập nhật ngay state user (state + localStorage) để header và mọi nơi
+      // hiển thị tên mới mà không cần đăng xuất/đăng nhập lại.
+      updateUser({ user_metadata: { display_name: res.displayName } });
       toast.success('Đã cập nhật tên hiển thị');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Không thể cập nhật');
