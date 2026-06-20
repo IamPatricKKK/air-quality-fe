@@ -442,7 +442,7 @@ td b{color:var(--ink)}
       </table>
     </div>
     <div class="g2">
-      <div class="note amber"><svg class="ic"><use href="#i-clock"/></svg><div><b>Lưu ý "thời gian thực":</b> mỗi nguồn có nhịp riêng — <b>Open-Meteo mỗi giờ</b> là xương sống ingest, IQAir/WAQI/OpenWeather bổ sung snapshot. Hệ thống là <b>near-realtime theo cron</b>, cân bằng độ tươi dữ liệu &amp; quota miễn phí.</div></div>
+      <div class="note amber"><svg class="ic"><use href="#i-clock"/></svg><div><b>Thời gian cập nhật:</b> tần suất cập nhật của <b>từng trạm do admin cài đặt</b> trong trang quản trị (theo từng trạm × nguồn) — cân bằng độ tươi dữ liệu &amp; quota. Giá trị cron ở bảng là mặc định.</div></div>
       <div class="note"><svg class="ic"><use href="#i-shield"/></svg><div><b>Priority càng thấp = ưu tiên càng cao.</b> Operator có thể fine-tune priority cho từng (trạm × endpoint) trong Admin — ví dụ đặt WAQI &gt; IQAir tại trạm có cảm biến đúng vị trí.</div></div>
     </div>
   </div>
@@ -501,7 +501,7 @@ td b{color:var(--ink)}
       <div class="card center"><span class="tag">04</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Raw payload</h4><p class="xsm muted">JSONB + <b>payload_hash</b> dedupe → replay được</p></div>
       <div class="card center"><span class="tag pink">05</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Normalize</h4><p class="xsm muted">Parser theo provider → AqPoint; log <b>normalize_runs</b></p></div>
       <div class="card center"><span class="tag pink">06</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">UPSERT</h4><p class="xsm muted"><b>air_quality_observations</b> + weather (idempotent)</p></div>
-      <div class="card center"><span class="tag pink">07</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Alert eval</h4><p class="xsm muted">So AQI với ngưỡng từng user (cron mỗi 30 phút)</p></div>
+      <div class="card center"><span class="tag pink">07</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Alert eval</h4><p class="xsm muted">Phát hiện AQI vượt ngưỡng của user → gửi cảnh báo ngay</p></div>
       <div class="card center"><span class="tag pink">08</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Notify</h4><p class="xsm muted">Vượt ngưỡng → tạo notification + gửi email SMTP</p></div>
     </div>
     <div class="g2">
@@ -706,7 +706,7 @@ td b{color:var(--ink)}
             <div class="cap" style="margin:.1em 0 0"><b style="color:var(--pink)">Khu vực</b> · ranh giới</div>
           </div>
         </div>
-        <div class="card" style="padding:.7em .9em;flex:0"><div class="xsm"><b>3 chế độ:</b> Trạm (pin số) · Khu vực (ranh giới tỉnh/phường, IDW) · Nhiệt (heatmap). Bản đồ Leaflet, 56 trạm toàn quốc.</div></div>
+        <div class="cap" style="margin:0;flex:0;font-weight:600;line-height:1.4"><b style="color:var(--purple)">3 chế độ:</b> Trạm · Khu vực (IDW) · Nhiệt (heatmap) — Leaflet, 56 trạm</div>
       </div>
     </div>
   </div>
@@ -728,7 +728,7 @@ td b{color:var(--ink)}
         <div class="shot" style="flex:1;min-height:0"><img src="assets/noti_email.png" alt="email" style="object-position:top left"></div>
         <div class="cap">Email báo cáo AQI hằng ngày qua Nodemailer + Gmail SMTP — gửi đều mỗi ngày 06:00</div>
         <div class="g2" style="gap:.6em">
-          <div class="card" style="padding:.7em .9em"><h3 style="font-size:.92em"><svg class="ic"><use href="#i-bolt"/></svg> Cơ chế kích hoạt</h3><p class="xsm muted">Alert evaluator (cron 30') so AQI với <b>ngưỡng cá nhân</b> từng user → vượt ngưỡng thì tạo notification + gửi email.</p></div>
+          <div class="card" style="padding:.7em .9em"><h3 style="font-size:.92em"><svg class="ic"><use href="#i-bolt"/></svg> Cơ chế kích hoạt</h3><p class="xsm muted">Khi phát hiện AQI <b>vượt ngưỡng cá nhân</b> của user → <b>ngay lập tức</b> tạo notification &amp; gửi cảnh báo email đến user.</p></div>
           <div class="card" style="padding:.7em .9em"><h3 style="font-size:.92em"><svg class="ic"><use href="#i-target"/></svg> Cá nhân hóa</h3><p class="xsm muted">Người dùng đặt <b>ngưỡng AQI/PM2.5</b> &amp; chọn <b>khu vực quan tâm</b>; kênh: in-app + email; có giờ yên tĩnh.</p></div>
         </div>
       </div>
