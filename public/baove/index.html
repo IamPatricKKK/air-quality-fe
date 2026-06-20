@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bảo vệ Đồ án — Air Quality VietNam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cabin:wght@500;600;700&family=Asap:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#5F0EFF; --violet:#7C3AED; --lav:#BA97FC; --lav2:#D1B9FF; --pale:#F0E9FF; --pale2:#FBF9FF;
+  --navy:#0B004F; --ink:#16132a; --muted:#6c6685; --line:#E7E0F7; --paper:#ffffff;
+  --grad:linear-gradient(120deg,#5F0EFF,#8B3DFF);
+  /* legacy aliases remapped to purple family */
+  --blue:#5F0EFF; --pink:#B026D3; --brand:#5F0EFF;
+  --get:#5F0EFF; --store:#7C3AED; --analyze:#9D4EDD; --dash:#B026D3;
+  --get-t:#efe9ff; --store-t:#f1ebfe; --analyze-t:#f3ecfd; --dash-t:#fbe9fb; --core-t:#eef0f7;
+  --aqi1:#22c55e; --aqi2:#eab308; --aqi3:#f97316; --aqi4:#ef4444; --aqi5:#a855f7; --aqi6:#7e1f3a;
+  --good:#16a34a; --bad:#d6006a;
+  --sh:0 16px 36px -20px rgba(35,10,90,.30);
+  --sh-sm:0 8px 20px -14px rgba(35,10,90,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Noto Sans',system-ui,-apple-system,'Segoe UI',sans-serif;background:#0a0726;color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+h1,h2,h3,h4,.disp{font-family:'Noto Sans','Be Vietnam Pro',sans-serif}
+.deck{width:100vw;height:100vh;position:relative}
+
+.slide{position:absolute;inset:0;width:100vw;height:100vh;display:none;flex-direction:column;
+  padding:4.35em 4em 2.9em;overflow:hidden;background:#ffffff}
+.slide.active{display:flex}
+
+/* injected decorations */
+.logochip{position:absolute;top:1.35em;left:4em;display:flex;align-items:center;gap:.6em;background:var(--pale);border:1px solid #e4dafb;border-radius:999px;padding:.4em 1.1em .4em .55em;z-index:4}
+.logochip img{width:1.55em;height:1.55em;object-fit:contain}
+.logochip span{font-size:.82em;font-weight:700;color:var(--ink);letter-spacing:.01em}
+.corner-tr{position:absolute;top:0;right:0;width:30%;height:2.5em;background:var(--navy);clip-path:polygon(14% 0,100% 0,100% 100%,0 100%);border-bottom-left-radius:16px;z-index:1}
+.corner-tr::after{content:'';position:absolute;left:-1.5em;top:0;width:2.4em;height:100%;background:var(--violet);clip-path:polygon(40% 0,100% 0,60% 100%,0 100%);opacity:.9}
+.corner-bl{position:absolute;bottom:0;left:0;width:38%;height:2.1em;background:var(--navy);clip-path:polygon(0 0,90% 0,100% 100%,0 100%);z-index:1}
+.corner-bl::after{content:'';position:absolute;right:-2.3em;bottom:0;width:3em;height:100%;background:var(--violet);clip-path:polygon(33% 0,100% 0,67% 100%,0 100%)}
+.hexdeco{position:absolute;right:-2.5em;bottom:-1.5em;width:21em;opacity:.4;z-index:0;pointer-events:none}
+.slide.active .logochip{animation:rise .5s .04s both}
+
+@media (min-aspect-ratio:16/9){ .slide{font-size:1.17vw} }
+@media (max-aspect-ratio:16/9){ .slide{font-size:1.78vh} }
+
+/* header — black uppercase + rule */
+.shead{display:flex;align-items:flex-end;gap:1.2em;z-index:2;border-bottom:2.5px solid #161229;padding-bottom:.5em}
+.htext{flex:1;min-width:0}
+.kicker{display:inline-flex;align-items:center;gap:.5em;font-size:.62em;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--purple);margin-bottom:.3em}
+.kicker::after{content:'';width:.4em;height:.4em;border-radius:50%;background:currentColor;opacity:.55}
+.kicker.pink{color:var(--dash)}
+.shead h2{font-size:1.95em;font-weight:800;line-height:1.03;letter-spacing:.004em;text-transform:uppercase;color:#16132a}
+.shead h2 .ac{color:var(--purple);-webkit-text-fill-color:var(--purple)}
+.subr{font-size:.75em;color:var(--muted);font-weight:600;white-space:nowrap;text-align:right;letter-spacing:.02em;padding-bottom:.15em}
+
+/* stage rail */
+.rail{display:flex;gap:.55em;margin-top:.95em;z-index:2}
+.rail .st{flex:1;display:flex;align-items:center;gap:.55em;padding:.5em .85em;border-radius:11px;background:var(--pale2);border:1px solid var(--line);font-size:.74em;font-weight:700;color:#a99fc4;box-shadow:var(--sh-sm)}
+.rail .st .num{width:1.55em;height:1.55em;border-radius:7px;display:grid;place-items:center;font-weight:800;background:#ece6fb;color:#a99fc4;font-size:.92em}
+.rail .st.on{color:#fff;border-color:transparent;background:var(--grad);box-shadow:0 10px 22px -12px rgba(95,14,255,.6)}
+.rail .st.on .num{background:rgba(255,255,255,.28);color:#fff}
+
+.body{flex:1;min-height:0;display:flex;flex-direction:column;gap:.9em;margin-top:.95em;z-index:2;justify-content:center}
+
+/* grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1em}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:.9em}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.85em}
+.row{flex:1;min-height:0}
+
+/* cards */
+.card{position:relative;background:var(--paper);border:1.5px solid var(--line);border-radius:15px;padding:1.05em 1.2em;box-shadow:var(--sh);display:flex;flex-direction:column;gap:.55em;min-height:0;overflow:hidden}
+.card.center{justify-content:center}
+.card.edge{border-color:#d9ccf7}
+.card.edge::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad)}
+.card.tint-get,.card.tint-store,.card.tint-analyze,.card.tint-dash{background:var(--pale2);border-color:#e3d9f8}
+.card h3{display:flex;align-items:center;gap:.6em;font-size:1.0em;font-weight:800;color:var(--ink)}
+.ic{width:1.2em;height:1.2em;flex:0 0 auto;stroke:var(--purple);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ibox{flex:0 0 auto;width:2.05em;height:2.05em;border-radius:50%;display:grid;place-items:center;background:var(--pale);border:1px solid #e4dafb}
+.ibox .ic{width:1.15em;height:1.15em}
+h3 .ic{stroke:var(--purple)}
+.captop{position:absolute;top:0;left:0;right:0;height:4px;border-radius:15px 15px 0 0}
+
+ul.clean{list-style:none;display:flex;flex-direction:column;gap:.52em;justify-content:flex-start;flex:0 1 auto}
+ul.clean li{position:relative;padding-left:1.45em;font-size:.9em;line-height:1.45;color:#3c3856}
+ul.clean li::before{content:'';position:absolute;left:.12em;top:.5em;width:.6em;height:.6em;border-radius:3px;background:var(--grad)}
+ul.clean li b{color:var(--ink);font-weight:700}
+
+.tag{display:inline-grid;place-items:center;min-width:1.7em;font-family:'Noto Sans';font-size:.72em;font-weight:800;padding:.16em .55em;border-radius:7px;background:var(--purple);color:#fff;letter-spacing:.02em}
+.tag.pink{background:var(--dash)}
+.pill{font-family:'JetBrains Mono',monospace;font-size:.75em;background:var(--navy);color:#c9b6ff;padding:.16em .5em;border-radius:6px;white-space:nowrap}
+.xsm{font-size:.8em;line-height:1.45} .sm{font-size:.86em} .muted{color:var(--muted)}
+.hl{background:linear-gradient(transparent 58%,rgba(95,14,255,.18) 58%);font-weight:700;padding:0 .05em;color:var(--ink)}
+
+/* big-number metric */
+.metric{position:relative;background:var(--pale2);border:1.5px solid #e3d9f8;border-radius:15px;padding:.95em 1.05em;box-shadow:var(--sh);display:flex;flex-direction:column;justify-content:center;gap:.2em;overflow:hidden}
+.metric::after{content:'';position:absolute;right:-1.4em;bottom:-1.4em;width:4em;height:4em;border-radius:50%;background:radial-gradient(circle,rgba(95,14,255,.12),transparent 70%)}
+.metric .v{font-family:'Noto Sans';font-size:2.6em;font-weight:800;line-height:.95;letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.metric .l{font-size:.76em;color:var(--muted);font-weight:500;line-height:1.32}
+
+/* notes */
+.note{display:flex;gap:.7em;align-items:flex-start;border-radius:13px;padding:.8em 1.05em;font-size:.86em;line-height:1.45;background:var(--paper);border:1.5px solid var(--line);box-shadow:var(--sh-sm)}
+.note .ic{stroke:var(--purple);margin-top:.05em}
+.note.grad{border:none;background:var(--pale)}
+.note.grad .ic{stroke:var(--violet)}
+.note.amber{background:#fff7f0;border-color:#f6dcc4}.note.amber .ic{stroke:#d98321}
+.note.blue,.note.teal{background:var(--pale);border-color:#e4dafb}
+.note b{color:var(--ink);font-weight:800}
+
+/* flow */
+.flow{display:flex;align-items:stretch;gap:.15em}
+.fstep{flex:1;position:relative;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:.9em .9em;box-shadow:var(--sh);display:flex;flex-direction:column;gap:.28em;overflow:hidden}
+.fstep::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--c,var(--grad))}
+.fstep .n{display:flex;align-items:center;gap:.5em;font-size:.68em;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.fstep .n .dotn{width:1.6em;height:1.6em;border-radius:8px;display:grid;place-items:center;color:#fff;background:var(--c,var(--purple));font-size:.95em;font-weight:800}
+.fstep h4{font-size:1.0em;font-weight:800;color:var(--ink)}
+.fstep p{font-size:.77em;color:var(--muted);line-height:1.38}
+.farrow{display:flex;align-items:center;justify-content:center;color:var(--lav)}
+.farrow svg{width:1.3em;height:1.3em;stroke:var(--lav);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* table */
+.tcard{background:var(--paper);border:1.5px solid var(--line);border-radius:15px;box-shadow:var(--sh);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:.85em}
+th,td{text-align:left;padding:.6em .85em;border-bottom:1px solid var(--line)}
+th{background:var(--navy);color:#d7c9ff;font-weight:700;font-size:.92em}
+tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even) td{background:var(--pale2)}
+td b{color:var(--ink)}
+
+/* screenshots */
+.shot{border:1.5px solid #e1d8f5;border-radius:14px;overflow:hidden;box-shadow:var(--sh);background:#f5f2fc;position:relative;display:flex;align-items:center;justify-content:center}
+.shot img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
+.shot.phone{background:#f1edfb;display:flex;align-items:center;justify-content:center}
+.shot.phone img{object-fit:contain;object-position:center}
+.cap{font-size:.76em;color:var(--muted);margin-top:.4em;text-align:center;font-weight:500}
+
+/* aqi scale */
+.aqi-row{display:flex;border-radius:13px;overflow:hidden;box-shadow:var(--sh)}
+.aqi-cell{flex:1;padding:.85em .5em;color:#fff;text-align:center}
+.aqi-cell .r{font-family:'Noto Sans';font-weight:800;font-size:1.05em}
+.aqi-cell .t{font-size:.74em;opacity:.96;margin-top:.18em;font-weight:600}
+
+/* chrome */
+.foot{position:absolute;left:4em;right:4em;bottom:.5em;display:flex;align-items:center;justify-content:space-between;font-size:.68em;color:var(--muted);z-index:3}
+.foot .dom{font-weight:800;color:var(--purple);letter-spacing:.02em}
+.foot .who{font-weight:600;color:#fff}
+.progress{position:absolute;left:0;bottom:0;height:4px;background:var(--grad);z-index:50;transition:width .4s}
+.pageno{position:absolute;right:1.5em;top:1.45em;font-size:.72em;font-weight:800;color:#b6abd6;z-index:5}
+.wm{display:none}
+.wave{display:none}
+
+/* build-in animation */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.slide.active .shead{animation:rise .5s .02s both}
+.slide.active .rail{animation:rise .5s .12s both}
+.slide.active>.body>*{opacity:0;animation:rise .55s both}
+.slide.active>.body>*:nth-child(1){animation-delay:.16s}
+.slide.active>.body>*:nth-child(2){animation-delay:.28s}
+.slide.active>.body>*:nth-child(3){animation-delay:.4s}
+.slide.active>.body>*:nth-child(4){animation-delay:.52s}
+
+/* ===== COVER ===== */
+.slide.cover{padding:0;background:linear-gradient(150deg,#0b0140 0%,#15053f 55%,#0B004F 100%);color:#f3eeff}
+.slide.cover .wrap{margin:auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1em;padding:4vh 6vw;z-index:3}
+.cover .logo{width:7.4em;height:7.4em;filter:drop-shadow(0 14px 30px rgba(0,0,0,.5))}
+.cover .school{font-size:.9em;letter-spacing:.05em;color:#c3b3ff;font-weight:700}.cover .school b{color:#fff}
+.cover .badge{font-size:.72em;letter-spacing:.24em;text-transform:uppercase;color:#fff;border:1px solid rgba(186,151,252,.5);padding:.5em 1.2em;border-radius:999px;background:rgba(124,58,237,.22);font-weight:700}
+.cover h1{font-size:2.7em;font-weight:800;line-height:1.13;letter-spacing:.004em;color:#fff;text-shadow:0 4px 30px rgba(124,58,237,.45)}
+.cover h1 .ac,.cover h1{color:#fff}
+.cover .domain{display:inline-flex;align-items:center;gap:.5em;font-family:'JetBrains Mono',monospace;font-size:1.02em;color:#fff;font-weight:600;padding:.45em 1.1em;border-radius:999px;background:linear-gradient(100deg,#5F0EFF,#B026D3);border:1px solid rgba(255,255,255,.2)}
+.cover .domain svg{width:1.1em;height:1.1em;stroke:#fff;fill:none;stroke-width:1.8}
+.cover .pillars{display:flex;gap:.55em;flex-wrap:wrap;justify-content:center;margin-top:.15em}
+.cover .pillars span{font-size:.78em;font-weight:700;padding:.5em 1em;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+.cover .meta{display:flex;gap:2.6em;flex-wrap:wrap;justify-content:center;margin-top:.6em;font-size:.92em}
+.cover .meta div{color:#cabbf0}.cover .meta b{color:#fff}
+.cover .kbd{position:absolute;left:50%;bottom:1.5em;transform:translateX(-50%);font-size:.68em;color:#9b8fd0;z-index:3;letter-spacing:.03em}
+.cover .illus-cv{position:absolute;right:2.5em;bottom:0;width:26em;opacity:.16;filter:brightness(0) invert(1);z-index:1}
+.cover .hex-cv{position:absolute;left:-3em;top:-2em;width:26em;opacity:.5;z-index:1}
+.cover.active .wrap>*{opacity:0;animation:rise .6s both}
+.cover.active .wrap>*:nth-child(1){animation-delay:.1s}.cover.active .wrap>*:nth-child(2){animation-delay:.2s}.cover.active .wrap>*:nth-child(3){animation-delay:.3s}.cover.active .wrap>*:nth-child(4){animation-delay:.42s}.cover.active .wrap>*:nth-child(5){animation-delay:.54s}.cover.active .wrap>*:nth-child(6){animation-delay:.64s}.cover.active .wrap>*:nth-child(7){animation-delay:.74s}
+
+@page{size:1280px 720px;margin:0}
+@media print{
+  html,body{overflow:visible;height:auto;background:#fff}
+  .deck{height:auto}
+  .slide{display:flex!important;position:relative;page-break-after:always;break-after:page;width:1280px;height:720px;font-size:15px}
+  .slide *,.cover .wrap>*{animation:none!important;opacity:1!important}
+  .progress,.kbd,.pageno{display:none}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ICON SPRITE -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7 15h10"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+<symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+<symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2"/></symbol>
+<symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v5c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2 0-1.5 1-2 2-2h2a3 3 0 0 0 3-3 9 9 0 0 0-9-9z"/><circle cx="7.5" cy="11" r="1"/><circle cx="11" cy="7.5" r="1"/><circle cx="15.5" cy="9" r="1"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5"/><path d="M4 20h16"/></symbol>
+<symbol id="i-wrench" viewBox="0 0 24 24"><path d="M15 3a5 5 0 0 0-5 6l-6 6 3 3 6-6a5 5 0 0 0 6-5l-3 3-2-.5-.5-2 3-3a5 5 0 0 0-1.5-1.5z"/></symbol>
+<symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h4l10 12h4M3 18h4l3-3.5M14 7l3-3 3 3M14 17l3 3 3-3"/></symbol>
+<symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 4a2 2 0 0 1 4 0v2h2a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2h-2a2 2 0 0 0-4 0H8a2 2 0 0 1-2-2v-2a2 2 0 0 1 0-4V8a2 2 0 0 1 2-2h2V4z"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 17H2L12 3z"/><path d="M12 9v5M12 17h.01"/></symbol>
+<symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13-6l3 2M20 12a8 8 0 0 1-13 6l-3-2"/><path d="M20 4v4h-4M4 20v-4h4"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M9 12a4 4 0 0 1 4-4h3a4 4 0 0 1 0 8h-2"/><path d="M15 12a4 4 0 0 1-4 4H8a4 4 0 0 1 0-8h2"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 6-8"/><path d="M16 6h5v5"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.6-9-9c-1.3-3 .5-6 3.5-6 2 0 3.5 1.5 4.5 3 1-1.5 2.5-3 4.5-3 3 0 4.8 3 3.5 6-2 4.4-9 9-9 9z"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+<symbol id="i-rocket" viewBox="0 0 24 24"><path d="M5 15c-1 1-1 4-1 4s3 0 4-1M9 17l-2-2M14.5 4.5C18 6 19.5 9 19.5 13c-2 0-4 1-6 3l-3.5-3.5c2-2 3-4 3-6 0-.7.5-1.5 1.5-2z"/><circle cx="14.5" cy="9.5" r="1.3"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.6 6 6.4.5-4.9 4.2 1.5 6.3L12 16.8 6.4 20l1.5-6.3L3 9.5 9.4 9 12 3z"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M16 8l-2.5 5.5L8 16l2.5-5.5L16 8z"/></symbol>
+<symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 2v20M4 7l16 10M20 7L4 17M12 6l-3 3M12 6l3 3M12 18l-3-3M12 18l3-3"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-mobile" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></symbol>
+</defs></svg>
+
+<div class="deck" id="deck">
+
+<!-- 1 · COVER -->
+<section class="slide cover active">
+  <img class="wave tr" src="assets/wave.svg" alt=""><img class="wave bl" src="assets/wave2.svg" alt="">
+  <div class="wrap">
+    <img class="logo" src="assets/ntu_logo.png" alt="Trường Đại học Nha Trang">
+    <div class="school">TRƯỜNG ĐẠI HỌC NHA TRANG · <b>KHOA CÔNG NGHỆ THÔNG TIN</b></div>
+    <div class="badge">Đồ án tốt nghiệp · Khóa 2022 – 2026</div>
+    <h1>Hệ thống Dashboard theo dõi<br>chất lượng không khí thời gian thực<br>tích hợp cảnh báo tự động</h1>
+    <div class="domain"><svg viewBox="0 0 24 24"><use href="#i-globe"/></svg> airquality.info.vn</div>
+    <div class="pillars">
+      <span style="color:#9ec1ff">① Thu thập</span><span style="color:#c4b5fd">② Lưu trữ</span>
+      <span style="color:#a9c0ff">③ Phân tích &amp; Dự báo</span><span style="color:#ff9ecb">④ Dashboard</span>
+    </div>
+    <div class="meta">
+      <div>SVTH: <b>Phạm Xuân Trường</b></div>
+      <div>MSSV: <b>64132786</b> · Lớp <b>64.CNTT-CLC</b></div>
+      <div>GVHD: <b>ThS. Mai Cường Thọ</b></div>
+    </div>
+  </div>
+  <div class="kbd">← → chuyển slide · F: toàn màn hình</div>
+</section>
+
+<!-- 2 · CONTEXT -->
+<section class="slide">
+  <div class="wave tr" style="background:none"></div><img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">01</div>
+  <div class="shead"><div class="htext"><span class="kicker">Đặt vấn đề</span>
+    <h2>Bối cảnh &amp; <span class="ac">bài toán</span></h2></div><div class="subr">Chương 1 · Tổng quan</div></div>
+  <div class="body">
+    <div class="row" style="display:grid;grid-template-columns:1.52fr 1fr;gap:1.1em">
+      <div style="display:flex;flex-direction:column;gap:.85em;min-height:0">
+        <div class="g3">
+          <div class="metric"><div class="v">#30</div><div class="l">VN trong nhóm quốc gia ô nhiễm nhất thế giới (IQAir 2023)</div></div>
+          <div class="metric"><div class="v">4–5×</div><div class="l">PM2.5 trung bình năm so với khuyến nghị WHO (15&nbsp;µg/m³)</div></div>
+          <div class="metric"><div class="v">&gt;60</div><div class="l">ngày/năm AQI xấu tại Hà Nội (2020–2023, tăng từ ~40)</div></div>
+        </div>
+        <div class="g2" style="flex:1;min-height:0">
+          <div class="card"><h3><svg class="ic"><use href="#i-search"/></svg> Hạn chế của hệ thống hiện có</h3>
+            <ul class="clean">
+              <li><b>Thiếu cá nhân hóa</b> — không tùy chỉnh ngưỡng cảnh báo</li>
+              <li><b>Không dự báo</b> — chỉ hiển thị hiện tại / lịch sử</li>
+              <li><b>Một nguồn dữ liệu</b> — không fusion, dễ gián đoạn</li>
+              <li><b>Cảnh báo hạn chế</b> — thiếu email / push tự động</li>
+              <li><b>UX chưa tối ưu mobile</b>, thiếu ngữ cảnh tiếng Việt</li>
+            </ul>
+          </div>
+          <div class="card edge"><h3><svg class="ic"><use href="#i-bulb"/></svg> Đề xuất: Air Quality VietNam</h3>
+            <ul class="clean">
+              <li><b>Fusion 4 nguồn</b> (IQAir · OpenWeather · Open-Meteo · WAQI)</li>
+              <li><b>Dự báo Time Series</b> 12–24h (Prophet · ARIMA · Linear)</li>
+              <li><b>Cảnh báo thông minh</b> theo ngưỡng cá nhân + email</li>
+              <li><b>Bản đồ tương tác</b> kiểu IQAir, mobile-first</li>
+              <li><b>Admin 2 zone</b>: Vận hành &amp; Phân tích tách biệt</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;min-height:0">
+        <div class="shot" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:.5em"><img src="assets/context_vn_map.png" alt="Bản đồ AQI Việt Nam" style="width:100%;height:100%;object-fit:contain"></div>
+        <div class="cap">Hiện trạng AQI Việt Nam (nguồn: PAM Air) — top 5 khu vực tốt &amp; ô nhiễm nhất</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 3 · OBJECTIVES -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">02</div>
+  <div class="shead"><div class="htext"><span class="kicker">Mục tiêu</span>
+    <h2>Mục tiêu &amp; <span class="ac">phạm vi đề tài</span></h2></div><div class="subr">Phần mở đầu</div></div>
+  <div class="body">
+    <div class="g2">
+      <div class="card"><h3><svg class="ic"><use href="#i-target"/></svg> Mục tiêu chính</h3>
+        <ul class="clean">
+          <li>Xây dựng <b>web dashboard theo dõi AQI thời gian thực</b> tại nhiều địa điểm trên toàn quốc</li>
+          <li>Tích hợp <b>cảnh báo tự động</b> theo ngưỡng do người dùng thiết lập</li>
+          <li>Vận dụng <b>full-stack · làm việc với API · CSDL chuỗi thời gian · xử lý luồng dữ liệu liên tục</b></li>
+          <li>Ứng dụng <b>phân tích chuỗi thời gian &amp; dự báo</b> vào bài toán môi trường</li>
+        </ul>
+      </div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-box"/></svg> Phạm vi sản phẩm</h3>
+        <div class="g2" style="gap:.7em;flex:1">
+          <div class="metric"><div class="v">56</div><div class="l">trạm quan trắc đang hoạt động</div></div>
+          <div class="metric"><div class="v">4</div><div class="l">nguồn dữ liệu (provider)</div></div>
+          <div class="metric"><div class="v">8</div><div class="l">schema CSDL theo domain</div></div>
+          <div class="metric"><div class="v">4</div><div class="l">ứng dụng (2 BE + 2 FE)</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="note grad"><svg class="ic"><use href="#i-rocket"/></svg><div><b>Đã triển khai thật trên Internet</b> tại <b>airquality.info.vn</b> — phục vụ người dùng cuối, không chỉ chạy môi trường local.</div></div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 4 · AQI -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">03</div>
+  <div class="shead"><div class="htext"><span class="kicker">Cơ sở lý thuyết</span>
+    <h2>Chỉ số <span class="ac">chất lượng không khí (AQI)</span></h2></div><div class="subr">Chương 1.2 · chuẩn US EPA</div></div>
+  <div class="body">
+    <div class="g2">
+      <div class="card"><h3><svg class="ic"><use href="#i-flask"/></svg> Các chất ô nhiễm cấu thành AQI</h3>
+        <div class="g3" style="gap:.5em;flex:1">
+          <div class="card center" style="padding:.55em;box-shadow:none;border-color:#fbd5d5;background:#fff6f6;gap:.25em"><b class="pill" style="background:#fee2e2;color:#b91c1c">PM2.5</b><div class="xsm muted">Bụi mịn ≤2.5µm — nguy hiểm nhất, vào sâu phổi &amp; máu</div></div>
+          <div class="card center" style="padding:.55em;box-shadow:none;border-color:#fde3c8;background:#fff9f2;gap:.25em"><b class="pill" style="background:#ffedd5;color:#c2410c">PM10</b><div class="xsm muted">Bụi thô ≤10µm — kích ứng hô hấp</div></div>
+          <div class="card center" style="padding:.55em;box-shadow:none;border-color:#cfe0fb;background:#f5f9ff;gap:.25em"><b class="pill" style="background:#dbeafe;color:#1d4ed8">O₃</b><div class="xsm muted">Ozon tầng mặt — tổn thương phổi</div></div>
+          <div class="card center" style="padding:.55em;box-shadow:none;border-color:#d6daf7;background:#f6f7ff;gap:.25em"><b class="pill" style="background:#e0e7ff;color:#4338ca">NO₂</b><div class="xsm muted">Khí thải xe / nhà máy — viêm hô hấp</div></div>
+          <div class="card center" style="padding:.55em;box-shadow:none;border-color:#f4ecbf;background:#fffdf2;gap:.25em"><b class="pill" style="background:#fef9c3;color:#a16207">SO₂</b><div class="xsm muted">Đốt nhiên liệu hóa thạch — mưa axit</div></div>
+          <div class="card center" style="padding:.55em;box-shadow:none;border-color:#e2e6ec;background:#fafbfc;gap:.25em"><b class="pill" style="background:#eef1f5;color:#374151">CO</b><div class="xsm muted">Giảm khả năng vận chuyển oxy của máu</div></div>
+        </div>
+      </div>
+      <div class="card edge center"><h3><svg class="ic"><use href="#i-ruler"/></svg> Công thức nội suy tuyến tính (US EPA)</h3>
+        <div class="pill" style="display:block;font-size:.92em;padding:.95em 1em;text-align:center;line-height:1.6">AQI = (I_Hi − I_Lo)/(BP_Hi − BP_Lo)<br>× (C − BP_Lo) + I_Lo</div>
+        <ul class="clean" style="flex:0">
+          <li><b>C</b> = nồng độ đo được · <b>BP</b> = ngưỡng breakpoint · <b>I</b> = giá trị AQI tương ứng</li>
+          <li>AQI tổng của trạm = <b>max</b> AQI từng chất → <span class="hl">dominant pollutant wins</span></li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="aqi-row">
+        <div class="aqi-cell" style="background:var(--aqi1)"><div class="r">0–50</div><div class="t">Tốt</div></div>
+        <div class="aqi-cell" style="background:var(--aqi2)"><div class="r">51–100</div><div class="t">Trung bình</div></div>
+        <div class="aqi-cell" style="background:var(--aqi3)"><div class="r">101–150</div><div class="t">Kém (nhạy cảm)</div></div>
+        <div class="aqi-cell" style="background:var(--aqi4)"><div class="r">151–200</div><div class="t">Có hại</div></div>
+        <div class="aqi-cell" style="background:var(--aqi5)"><div class="r">201–300</div><div class="t">Rất có hại</div></div>
+        <div class="aqi-cell" style="background:var(--aqi6)"><div class="r">301–500</div><div class="t">Nguy hại</div></div>
+      </div>
+      <div class="cap">Bảng 1.1 — Thang đo AQI 6 mức theo chuẩn US EPA (0–500)</div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 5 · ARCHITECTURE -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">04</div>
+  <div class="shead"><div class="htext"><span class="kicker">Thiết kế hệ thống</span>
+    <h2>Kiến trúc tổng thể — <span class="ac">luồng dữ liệu</span></h2></div><div class="subr">Chương 4.1 · Hình 4.1</div></div>
+  <div class="rail">
+    <div class="st on"><span class="num">1</span> Thu thập</div><div class="st on"><span class="num">2</span> Lưu trữ</div>
+    <div class="st on"><span class="num">3</span> Phân tích</div><div class="st on"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="flow">
+      <div class="fstep" style="--c:var(--blue)"><div class="n"><span class="dotn">1</span> Thu thập</div><h4>Provider → Ingest</h4><p>4 API công cộng · cron định kỳ · normalizer chuẩn hóa</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:var(--violet)"><div class="n"><span class="dotn">2</span> Lưu trữ</div><h4>PostgreSQL 16</h4><p>8 schema theo domain · view fusion · chuỗi thời gian</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:#a23bd6"><div class="n"><span class="dotn">3</span> Phân tích</div><h4>FastAPI Analytics</h4><p>Forecast · anomaly · seasonal · correlation · health</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:var(--pink)"><div class="n"><span class="dotn">4</span> Hiển thị</div><h4>Dashboard + Admin</h4><p>React · bản đồ Leaflet · biểu đồ · cảnh báo</p></div>
+    </div>
+    <div class="g4">
+      <div class="card center"><h3 style="font-size:.96em"><svg class="ic"><use href="#i-server"/></svg> air-quality-api</h3><p class="xsm muted">NestJS 11 + MikroORM · <b>service chính</b>. Ingestion 4 provider, JWT/RBAC, REST API, email SMTP.</p><span class="tag">NestJS · TS</span></div>
+      <div class="card center"><h3 style="font-size:.96em"><svg class="ic"><use href="#i-cpu"/></svg> air-quality-be</h3><p class="xsm muted">FastAPI + Python · <b>service phân tích</b>. Đọc dữ liệu chuẩn hóa, chạy forecast, ghi kết quả.</p><span class="tag pink">Python · ML</span></div>
+      <div class="card center"><h3 style="font-size:.96em"><svg class="ic"><use href="#i-monitor"/></svg> air-quality-fe</h3><p class="xsm muted"><b>Dashboard người dùng</b>. React 18 + Vite + Leaflet. Chỉ giao tiếp với api.</p><span class="tag">React 18</span></div>
+      <div class="card center"><h3 style="font-size:.96em"><svg class="ic"><use href="#i-shield"/></svg> air-quality-admin</h3><p class="xsm muted"><b>Quản trị 2 zone</b>: Vận hành (api) &amp; Phân tích (be, lazy-load).</p><span class="tag">React 18</span></div>
+    </div>
+    <div class="note grad"><svg class="ic"><use href="#i-layers"/></svg><div><b>Kiến trúc microservice phân tán:</b> 4 repo Git độc lập + 1 PostgreSQL dùng chung — tách trách nhiệm rõ ràng, đúng ngôn ngữ cho đúng việc (TS cho web API, Python cho ML); service phân tích có thể dừng mà luồng chính vẫn chạy.</div></div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 6 · TECH STACK -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">05</div>
+  <div class="shead"><div class="htext"><span class="kicker">Công nghệ</span>
+    <h2>Stack <span class="ac">công nghệ sử dụng</span></h2></div><div class="subr">Chương 5.1 · Bảng 5.1</div></div>
+  <div class="body">
+    <div class="g4">
+      <div class="card edge"><h3><svg class="ic"><use href="#i-gear"/></svg> Backend chính</h3><ul class="clean"><li>NestJS 11 · TypeScript</li><li>MikroORM 6.4</li><li>@nestjs/schedule (cron)</li><li>Nodemailer + SMTP</li></ul></div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-cpu"/></svg> Backend phân tích</h3><ul class="clean"><li>FastAPI · Python 3.11</li><li>asyncpg + SQLAlchemy 2</li><li>Prophet · statsmodels</li><li>scikit-learn · APScheduler</li></ul></div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-palette"/></svg> Frontend</h3><ul class="clean"><li>React 18 · Vite 5 · TS</li><li>Tailwind · shadcn/ui</li><li>Leaflet + leaflet.heat</li><li>Recharts · TanStack Query</li></ul></div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-db"/></svg> Hạ tầng &amp; CSDL</h3><ul class="clean"><li>PostgreSQL 16 (Docker)</li><li>Docker Compose · GHCR</li><li>Caddy + Let's Encrypt</li><li>GitHub Actions CI/CD</li></ul></div>
+    </div>
+    <div class="g3">
+      <div class="note"><svg class="ic"><use href="#i-lock"/></svg><div><b>Bảo mật:</b> JWT RS256 + JWKS giữa 2 service · RBAC 5 vai trò</div></div>
+      <div class="note"><svg class="ic"><use href="#i-mobile"/></svg><div><b>PWA:</b> service worker (Workbox) offline · Web Push (VAPID)</div></div>
+      <div class="note"><svg class="ic"><use href="#i-bolt"/></svg><div><b>Realtime:</b> socket.io · TanStack Query cache · index BRIN</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 7 · GET providers -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">06</div>
+  <div class="shead"><div class="htext"><span class="kicker">① Thu thập dữ liệu</span>
+    <h2>Nguồn dữ liệu &amp; <span class="ac">ma trận ưu tiên</span></h2></div><div class="subr">Chương 4.2 · Bảng 4.1–4.2</div></div>
+  <div class="rail">
+    <div class="st on"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="tcard">
+      <table>
+        <thead><tr><th>Provider</th><th>Vai trò</th><th>AQI gốc / Pollutant</th><th>Cron — tần suất</th><th>Priority</th><th>Quota</th></tr></thead>
+        <tbody>
+        <tr><td><b>IQAir</b> <span class="tag">nguồn chính</span></td><td>AQI US chất lượng cao</td><td>AQI US + dominant (suy PM)</td><td><span class="pill">30 */6 * * *</span> mỗi 6h</td><td><b>50</b></td><td>10.000/tháng</td></tr>
+        <tr><td><b>Open-Meteo</b></td><td>Ingest chính (chuỗi giờ)</td><td>US+EU AQI · 9 trường đủ</td><td><span class="pill">0 * * * *</span> <b style="color:var(--blue)">mỗi giờ</b></td><td>100</td><td>≈ không giới hạn</td></tr>
+        <tr><td><b>OpenWeather</b></td><td>Bổ sung 7 pollutant</td><td>EU 1–5 → tính lại US AQI</td><td><span class="pill">15 */3 * * *</span> mỗi 3h</td><td>150</td><td>1.000/ngày</td></tr>
+        <tr><td><b>WAQI</b></td><td>Tham khảo, detail</td><td>AQI US realtime + iaqi</td><td><span class="pill">45 */3 * * *</span> mỗi 3h</td><td>200</td><td>Rate-limited</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="g2">
+      <div class="note amber"><svg class="ic"><use href="#i-clock"/></svg><div><b>Lưu ý "thời gian thực":</b> mỗi nguồn có nhịp riêng — <b>Open-Meteo mỗi giờ</b> là xương sống ingest, IQAir/WAQI/OpenWeather bổ sung snapshot. Hệ thống là <b>near-realtime theo cron</b>, cân bằng độ tươi dữ liệu &amp; quota miễn phí.</div></div>
+      <div class="note"><svg class="ic"><use href="#i-shield"/></svg><div><b>Priority càng thấp = ưu tiên càng cao.</b> Operator có thể fine-tune priority cho từng (trạm × endpoint) trong Admin — ví dụ đặt WAQI &gt; IQAir tại trạm có cảm biến đúng vị trí.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 8 · GET fusion -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">07</div>
+  <div class="shead"><div class="htext"><span class="kicker">① Thu thập dữ liệu</span>
+    <h2>Chuẩn hóa &amp; <span class="ac">hợp nhất nguồn (Fusion)</span></h2></div><div class="subr">Chương 4.2.3–4.2.4</div></div>
+  <div class="rail">
+    <div class="st on"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="g2">
+      <div class="card"><h3><svg class="ic"><use href="#i-wrench"/></svg> Normalizer — 1 interface <span class="pill">AqPoint</span></h3>
+        <p class="xsm muted">Mỗi provider format/đơn vị khác nhau → bộ chuẩn hóa riêng, cùng trả về 1 schema thống nhất:</p>
+        <div class="tcard"><table class="xsm"><tbody>
+          <tr><td><b>Open-Meteo</b></td><td>Dùng trực tiếp ~24 điểm/giờ</td></tr>
+          <tr><td><b>IQAir</b></td><td>Suy PM2.5/PM10 từ AQI (đảo ngược EPA)</td></tr>
+          <tr><td><b>OpenWeather</b></td><td>Tính lại US AQI từ PM (xuôi EPA)</td></tr>
+          <tr><td><b>WAQI</b></td><td>Resolve timestamp từ 3 format</td></tr>
+        </tbody></table></div>
+        <div class="xsm muted">→ UPSERT idempotent: <span class="pill">ON CONFLICT (station, observed_at, endpoint)</span></div>
+      </div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-shuffle"/></svg> Fusion bằng SQL View</h3>
+        <p class="xsm muted">Cùng trạm × cùng giờ có thể có 4 giá trị AQI → chọn 1 đại diện bằng <b>ROW_NUMBER()</b>:</p>
+        <div class="pill" style="display:block;padding:.8em .9em;line-height:1.7;font-size:.73em">PARTITION BY station, hour(observed_at)<br>ORDER BY <span style="color:#ff8fc4">priority</span>(iqair→waqi→ow→om),<br>&nbsp;&nbsp;fetched_at DESC&nbsp;&nbsp;→&nbsp;&nbsp;WHERE rn = 1</div>
+        <ul class="clean">
+          <li><b>Continuity:</b> IQAir lỗi → tự fallback WAQI → OW → Open-Meteo, người dùng không thấy gián đoạn</li>
+          <li><b>Bảo toàn dữ liệu gốc</b>, view chỉ đọc · query &lt;50ms với ~100k bản ghi</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note grad"><svg class="ic"><use href="#i-puzzle"/></svg><div><b>Khả năng mở rộng:</b> thêm provider mới chỉ cần thêm 1 dòng vào <span class="pill">CASE sp.code</span> — không sửa logic ứng dụng ở bất kỳ đâu khác.</div></div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 9 · GET pipeline -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">08</div>
+  <div class="shead"><div class="htext"><span class="kicker">① Thu thập dữ liệu</span>
+    <h2>Luồng thu thập <span class="ac">(Ingest Pipeline)</span></h2></div><div class="subr">Chương 4.2.5 · Hình 4.2</div></div>
+  <div class="rail">
+    <div class="st on"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="g4" style="grid-template-rows:1fr 1fr">
+      <div class="card center"><span class="tag">01</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Cron trigger</h4><p class="xsm muted">@nestjs/schedule theo <span class="pill">INGEST_CRON</span> → tạo 1 <b>pipeline_run</b></p></div>
+      <div class="card center"><span class="tag">02</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">HTTP Fetch</h4><p class="xsm muted">Gọi API provider · AbortController timeout 15s</p></div>
+      <div class="card center"><span class="tag">03</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Log request</h4><p class="xsm muted"><b>outbound_requests</b>: status, latency, succeeded</p></div>
+      <div class="card center"><span class="tag">04</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Raw payload</h4><p class="xsm muted">JSONB + <b>payload_hash</b> dedupe → replay được</p></div>
+      <div class="card center"><span class="tag pink">05</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Normalize</h4><p class="xsm muted">Parser theo provider → AqPoint; log <b>normalize_runs</b></p></div>
+      <div class="card center"><span class="tag pink">06</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">UPSERT</h4><p class="xsm muted"><b>air_quality_observations</b> + weather (idempotent)</p></div>
+      <div class="card center"><span class="tag pink">07</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Alert eval</h4><p class="xsm muted">So AQI với ngưỡng từng user (cron mỗi 30 phút)</p></div>
+      <div class="card center"><span class="tag pink">08</span><h4 style="font-family:'Cabin';color:var(--navy);font-size:.98em">Notify</h4><p class="xsm muted">Vượt ngưỡng → tạo notification + gửi email SMTP</p></div>
+    </div>
+    <div class="g2">
+      <div class="note"><svg class="ic"><use href="#i-search"/></svg><div><b>Data lineage:</b> mỗi quan trắc truy ngược pipeline_run → outbound_request → raw_payload → normalize_run → audit trọn vẹn, replay từ raw không cần gọi lại API.</div></div>
+      <div class="note"><svg class="ic"><use href="#i-bolt"/></svg><div><b>Trigger thủ công:</b> <span class="pill">POST /api/v1/ingest/run</span> · xem 20 lần chạy gần nhất <span class="pill">GET /ingest/status</span></div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 10 · STORE schema -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">09</div>
+  <div class="shead"><div class="htext"><span class="kicker">② Lưu trữ</span>
+    <h2>CSDL theo mô hình <span class="ac">Schema-Per-Domain</span></h2></div><div class="subr">Chương 4.3 · PostgreSQL 16</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st on"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="g4" style="grid-template-rows:1fr 1fr;gap:.6em">
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">catalog</h4><p class="xsm muted">areas, <b>stations</b> — nguồn sự thật địa lý</p></div>
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">ingest</h4><p class="xsm muted">providers, pipeline_runs, raw_payloads</p></div>
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">core</h4><p class="xsm muted"><b>observations</b>, weather + view <b>fused</b></p></div>
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">iam</h4><p class="xsm muted">users, roles, refresh_sessions</p></div>
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">app</h4><p class="xsm muted">alert_rules, notifications, prefs</p></div>
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">analytics</h4><p class="xsm muted">anomalies, seasonal, correlation</p></div>
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">forecast</h4><p class="xsm muted">model_registry, versions, predictions</p></div>
+      <div class="card center" style="padding:.65em .85em;gap:.2em"><h4 style="font-family:'Cabin';color:var(--navy);font-size:.92em">ops</h4><p class="xsm muted">audit_logs, configs, health_checks</p></div>
+    </div>
+    <div class="g2">
+      <div class="card"><h3><svg class="ic"><use href="#i-check"/></svg> Vì sao tách 8 schema?</h3>
+        <ul class="clean">
+          <li><b>Bounded context</b> — nhìn tên schema biết ngay bản chất dữ liệu</li>
+          <li><b>Phân quyền cấp schema</b> — api: RW catalog/core/iam · be: READ core, RW analytics/forecast (least privilege)</li>
+          <li><b>Migration độc lập</b> — MikroORM &amp; Alembic không tranh chấp version</li>
+          <li><b>Dễ tách DB</b>: <span class="pill">pg_dump -n analytics</span> → DB riêng cho ML</li>
+        </ul>
+      </div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-clock"/></svg> Thiết kế cho dữ liệu chuỗi thời gian</h3>
+        <ul class="clean">
+          <li>Khóa duy nhất <span class="pill">(station, observed_at, endpoint)</span> → upsert idempotent</li>
+          <li>Index BRIN cho chuỗi thời gian, sẵn sàng <b>partition theo tháng</b></li>
+          <li><b>quality_status</b>: valid / missing / outlier / rejected</li>
+          <li>Khoảng tin cậy dự báo: <span class="pill">yhat_lower / yhat_upper</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 11 · ANALYZE flow -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">10</div>
+  <div class="shead"><div class="htext"><span class="kicker">③ Phân tích &amp; Dự báo</span>
+    <h2>Mô-đun phân tích — <span class="ac">luồng &amp; lịch chạy</span></h2></div><div class="subr">Chương 4.6 · APScheduler</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st on"><span class="num">3</span> Phân tích</div><div class="st"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="flow">
+      <div class="fstep" style="--c:var(--blue)"><div class="n"><span class="dotn">1</span> Đọc</div><h4>Đọc dữ liệu</h4><p>Observations theo cửa sổ huấn luyện 7–14 ngày từ PostgreSQL</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:var(--violet)"><div class="n"><span class="dotn">2</span> Fit</div><h4>Chạy thuật toán</h4><p>3 model forecast song song cùng target "aqi" + các phân tích</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:var(--pink)"><div class="n"><span class="dotn">3</span> Ghi</div><h4>Ghi kết quả</h4><p>Schema analytics/forecast + metrics MAE/RMSE/MAPE</p></div>
+    </div>
+    <div class="g2">
+      <div class="card"><h3><svg class="ic"><use href="#i-calendar"/></svg> Lịch APScheduler (chạy đêm, tránh giờ cao điểm)</h3>
+        <div class="tcard"><table class="xsm"><tbody>
+          <tr><td>Daily summary <span class="pill">01:00</span></td><td>Seasonal <span class="pill">03:30</span></td></tr>
+          <tr><td>Anomaly <span class="pill">mỗi 2h</span></td><td>Correlation <span class="pill">04:00</span></td></tr>
+          <tr><td>Prophet <span class="pill">02:00</span></td><td>Trend <span class="pill">04:30</span></td></tr>
+          <tr><td>ARIMA <span class="pill">02:30</span> · Linear <span class="pill">03:00</span></td><td>—</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-repeat"/></svg> Vì sao tách service phân tích?</h3>
+        <ul class="clean">
+          <li><b>Batch nặng</b> (Prophet fit vài giây/trạm) tách khỏi luồng request–response nhanh</li>
+          <li>be <b>chỉ đọc</b> dữ liệu đã chuẩn hóa, ghi kết quả về analytics/forecast</li>
+          <li>be có thể <b>dừng / thay thế</b> mà không ảnh hưởng ingestion &amp; dashboard</li>
+          <li>Admin gọi <span class="pill">/analytics/forecast/latest</span> → so sánh 3 model</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 12 · ANALYZE forecast models -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">11</div>
+  <div class="shead"><div class="htext"><span class="kicker">③ Phân tích &amp; Dự báo</span>
+    <h2>Thuật toán <span class="ac">dự báo chuỗi thời gian</span></h2></div><div class="subr">Chương 2.8 · 3 mô hình song song</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st on"><span class="num">3</span> Phân tích</div><div class="st"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="g3">
+      <div class="card"><div style="position:absolute;top:0;left:0;right:0;height:4px;background:var(--blue)"></div><h3><svg class="ic" style="stroke:var(--blue)"><use href="#i-trend"/></svg> Prophet <span class="tag">Meta</span></h3>
+        <p class="xsm muted">Mô hình cộng tính <span class="pill">y=g(t)+s(t)+h(t)+ε</span></p>
+        <ul class="clean"><li>Đa chu kỳ (ngày/tuần/mùa) qua chuỗi <b>Fourier</b></li><li>Xử lý <b>dữ liệu thiếu</b> &amp; outlier tự nhiên</li><li>Bayesian → có <b>khoảng tin cậy</b></li><li>Changepoint detection xu hướng</li></ul></div>
+      <div class="card"><div style="position:absolute;top:0;left:0;right:0;height:4px;background:var(--violet)"></div><h3><svg class="ic" style="stroke:var(--violet)"><use href="#i-ruler"/></svg> ARIMA <span class="tag">statsmodels</span></h3>
+        <p class="xsm muted">ARIMA(2,1,2) — thống kê cổ điển</p>
+        <ul class="clean"><li>Giả định <b>stationary</b> sau differencing</li><li>Mạnh khi chuỗi <b>ngắn</b>, ổn định</li><li>Cần chuỗi liên tục → phải interpolate</li><li>Xử lý multi-seasonality hạn chế</li></ul></div>
+      <div class="card"><div style="position:absolute;top:0;left:0;right:0;height:4px;background:var(--pink)"></div><h3><svg class="ic" style="stroke:var(--pink)"><use href="#i-chart"/></svg> Linear Reg. <span class="tag pink">sklearn</span></h3>
+        <p class="xsm muted">Baseline hồi quy tuyến tính</p>
+        <ul class="clean"><li>Đơn giản, nhanh, dễ giải thích</li><li>Tham chiếu để so sánh model khác</li><li>Horizon 24h ổn định</li><li>Không bắt được chu kỳ phức tạp</li></ul></div>
+    </div>
+    <div class="note grad"><svg class="ic"><use href="#i-star"/></svg><div><b>Champion–Challenger:</b> 3 model chạy song song trên cùng target AQI, đánh giá tự động bằng <b>MAE / RMSE / MAPE</b> lưu vào <span class="pill">forecast.forecast_runs</span> → chọn model tốt nhất theo từng trạm &amp; lượng dữ liệu (đã áp dụng cho lớp Grid ML).</div></div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 13 · ANALYZE other -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">12</div>
+  <div class="shead"><div class="htext"><span class="kicker">③ Phân tích &amp; Dự báo</span>
+    <h2>Các mô-đun <span class="ac">phân tích khác</span></h2></div><div class="subr">Chương 2.8 · 4.3.7 · 4.6</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st on"><span class="num">3</span> Phân tích</div><div class="st"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="g4">
+      <div class="card center"><h3 style="font-size:.94em"><svg class="ic"><use href="#i-alert"/></svg> Anomaly</h3><p class="xsm muted">Phát hiện bất thường bằng <b>z-score + IQR</b>, phân mức severity (low→critical)</p></div>
+      <div class="card center"><h3 style="font-size:.94em"><svg class="ic"><use href="#i-repeat"/></svg> Seasonal</h3><p class="xsm muted">Profile hourly/daily — xác nhận <b>2 đỉnh giờ cao điểm</b> 7–9h &amp; 17–19h</p></div>
+      <div class="card center"><h3 style="font-size:.94em"><svg class="ic"><use href="#i-link"/></svg> Correlation</h3><p class="xsm muted">Ma trận <b>Pearson</b> giữa pollutant — NO₂–SO₂ ≈ 0.73</p></div>
+      <div class="card center"><h3 style="font-size:.94em"><svg class="ic"><use href="#i-trend"/></svg> Trend</h3><p class="xsm muted">Hồi quy tuyến tính: <b>slope, r², direction</b></p></div>
+    </div>
+    <div class="g2">
+      <div class="card edge"><h3><svg class="ic"><use href="#i-heart"/></svg> Health Impact Scoring</h3>
+        <ul class="clean">
+          <li>Thang <b>exposure 0–100</b> theo cửa sổ 48h, kèm advice sức khỏe</li>
+          <li>Hà Nội–Hoàn Kiếm: AQI TB 104.5 (<b>unhealthy-sensitive</b>), trội CO</li>
+          <li>Nha Trang: AQI TB 69.1 (<b>moderate</b>) → đúng khác biệt giao thông/khí hậu</li>
+        </ul>
+      </div>
+      <div class="card"><h3><svg class="ic"><use href="#i-map"/></svg> Nội suy không gian (toàn lãnh thổ)</h3>
+        <ul class="clean">
+          <li><b>Grid fusion</b> ~701 ô lưới: nền Open-Meteo CAMS + trạm thực (IDW w=3/d²)</li>
+          <li><b>Ward fusion</b> ~3.321 phường/xã từ trạm bán kính 50km (trung thực)</li>
+          <li><b>Grid ML</b>: HistGradientBoosting + GroupKFold, champion–challenger ≥5%</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 14 · DASHBOARD user -->
+<section class="slide">
+  <div class="wm">13</div>
+  <div class="shead"><div class="htext"><span class="kicker pink">④ Dashboard</span>
+    <h2>Giao diện người dùng — <span class="ac">mobile-first</span></h2></div><div class="subr">Chương 4.5.1 · 5.3</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st on"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="row" style="display:grid;grid-template-columns:1.9fr 1fr;gap:1em">
+      <div style="display:flex;flex-direction:column;min-height:0">
+        <div class="shot" style="flex:1;min-height:0"><img src="assets/fe_home_desktop.png" alt="Dashboard desktop"></div>
+        <div class="cap">Hình 5.1 — Dashboard desktop: AQI Summary + lưới trạm quan trắc có pin số</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.7em;min-height:0">
+        <div class="shot phone" style="flex:1;min-height:0"><img src="assets/fe_home_mobile.png" alt="mobile"></div>
+        <div class="card" style="padding:.75em .9em;gap:.4em"><div class="xsm"><b>Thành phần:</b> AQI Summary · Station Grid (ghim/tìm/lọc) · Bản đồ 3 chế độ · biểu đồ 24h · Forecast 3 đường · xếp hạng khu vực.</div>
+          <div><span class="tag">Dark/Light</span> <span class="tag">5 tab mobile</span> <span class="tag pink">PWA offline</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 15 · DASHBOARD map -->
+<section class="slide">
+  <div class="wm">14</div>
+  <div class="shead"><div class="htext"><span class="kicker pink">④ Dashboard</span>
+    <h2>Bản đồ tương tác &amp; <span class="ac">biểu đồ dự báo</span></h2></div><div class="subr">Chương 5.3.2 · Leaflet + Recharts</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st on"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="row" style="display:grid;grid-template-columns:1.5fr 1fr;gap:1em">
+      <div style="display:flex;flex-direction:column;min-height:0">
+        <div class="shot" style="flex:1;min-height:0"><img src="assets/map_station_desktop.png" alt="map desktop"></div>
+        <div class="cap">Chế độ Trạm (desktop) — AQI pin có số + biểu đồ diễn biến &amp; dự báo Prophet (MAE 10.1)</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.6em;min-height:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55em;flex:1;min-height:0">
+          <div style="display:flex;flex-direction:column;gap:.3em;min-height:0">
+            <div class="shot phone" style="flex:1;min-height:0"><img src="assets/map_station_mobile.png" alt="trạm"></div>
+            <div class="cap" style="margin:.1em 0 0"><b style="color:var(--blue)">Trạm</b> · pin AQI</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.3em;min-height:0">
+            <div class="shot phone" style="flex:1;min-height:0"><img src="assets/map_region_mobile.png" alt="khu vực"></div>
+            <div class="cap" style="margin:.1em 0 0"><b style="color:var(--pink)">Khu vực</b> · ranh giới</div>
+          </div>
+        </div>
+        <div class="card" style="padding:.7em .9em;flex:0"><div class="xsm"><b>3 chế độ:</b> Trạm (pin số) · Khu vực (ranh giới tỉnh/phường, IDW) · Nhiệt (heatmap). Bản đồ Leaflet, 56 trạm toàn quốc.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 16 · ALERTS / NOTIFICATIONS -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">15</div>
+  <div class="shead"><div class="htext"><span class="kicker pink">④ Dashboard</span>
+    <h2>Cảnh báo tự động &amp; <span class="ac">thông báo</span></h2></div><div class="subr">Chương 4.2.5 (B7–8) · email + in-app</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st on"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="row" style="display:grid;grid-template-columns:1.55fr 1fr;gap:1em">
+      <div style="display:flex;flex-direction:column;gap:.6em;min-height:0">
+        <div class="shot" style="flex:1;min-height:0"><img src="assets/noti_email.png" alt="email" style="object-position:top left"></div>
+        <div class="cap">Email báo cáo AQI hằng ngày qua Nodemailer + Gmail SMTP — gửi đều mỗi ngày 06:00</div>
+        <div class="g2" style="gap:.6em">
+          <div class="card" style="padding:.7em .9em"><h3 style="font-size:.92em"><svg class="ic"><use href="#i-bolt"/></svg> Cơ chế kích hoạt</h3><p class="xsm muted">Alert evaluator (cron 30') so AQI với <b>ngưỡng cá nhân</b> từng user → vượt ngưỡng thì tạo notification + gửi email.</p></div>
+          <div class="card" style="padding:.7em .9em"><h3 style="font-size:.92em"><svg class="ic"><use href="#i-target"/></svg> Cá nhân hóa</h3><p class="xsm muted">Người dùng đặt <b>ngưỡng AQI/PM2.5</b> &amp; chọn <b>khu vực quan tâm</b>; kênh: in-app + email; có giờ yên tĩnh.</p></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.45em;min-height:0">
+        <div class="shot phone" style="flex:1;min-height:0"><img src="assets/noti_inapp.png" alt="in-app"></div>
+        <div class="cap" style="margin:0">Thông báo trong ứng dụng (tab Cảnh báo) — lọc Tất cả / Chưa đọc / Cảnh báo</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 17 · ADMIN + SECURITY -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">16</div>
+  <div class="shead"><div class="htext"><span class="kicker pink">④ Dashboard</span>
+    <h2>Quản trị <span class="ac">2 Zone &amp; Bảo mật</span></h2></div><div class="subr">Chương 4.5.2 · 4.7</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st on"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="g2">
+      <div class="card center" style="border-left:5px solid var(--blue)"><h3><svg class="ic" style="stroke:var(--blue)"><use href="#i-gear"/></svg> Zone A — Vận hành <span class="tag">api</span></h3>
+        <p class="sm muted">7 trang CRUD: Dashboard, Users, Stations, Providers &amp; Pipelines, Source Compare, Notifications, Alert Deliveries. Đối tượng: <b>operator / admin</b>.</p></div>
+      <div class="card center" style="border-left:5px solid var(--pink)"><h3><svg class="ic" style="stroke:var(--pink)"><use href="#i-chart"/></svg> Zone B — Phân tích <span class="tag pink">be · lazy-load</span></h3>
+        <p class="sm muted">Hub /analytics, 7 tab: Forecast, Anomaly, Daily Summary, Seasonal, Correlation, Trend, Health. Đối tượng: <b>analyst / admin</b>.</p></div>
+    </div>
+    <div class="g3">
+      <div class="card center"><h3 style="font-size:.94em"><svg class="ic"><use href="#i-bolt"/></svg> Lazy-Load</h3><p class="xsm muted"><span class="pill">React.lazy + Suspense</span> tách chunk Zone B (~350KB). Operator vào /ops không tải code phân tích.</p></div>
+      <div class="card center"><h3 style="font-size:.94em"><svg class="ic"><use href="#i-shield"/></svg> Graceful Degradation</h3><p class="xsm muted">be crash/OOM → Zone A vẫn chạy, Zone B hiện error boundary riêng, tự phục hồi.</p></div>
+      <div class="card center"><h3 style="font-size:.94em"><svg class="ic"><use href="#i-lock"/></svg> JWT RS256 + RBAC</h3><p class="xsm muted">api ký bằng private key, be verify qua JWKS (cache 5'). 5 vai trò: super_admin → user.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 16b · ADMIN SCREENSHOTS -->
+<section class="slide">
+  <div class="shead"><div class="htext"><span class="kicker pink">④ Dashboard</span>
+    <h2>Giao diện <span class="ac">quản trị (Admin)</span></h2></div><div class="subr">admin.airquality.info.vn</div></div>
+  <div class="rail">
+    <div class="st"><span class="num">1</span> Thu thập</div><div class="st"><span class="num">2</span> Lưu trữ</div>
+    <div class="st"><span class="num">3</span> Phân tích</div><div class="st on"><span class="num">4</span> Dashboard</div>
+  </div>
+  <div class="body">
+    <div class="row" style="display:grid;grid-template-columns:1.42fr 1fr;gap:1em">
+      <div style="display:flex;flex-direction:column;min-height:0">
+        <div class="shot" style="flex:1;min-height:0"><img src="assets/admin_overview.png" alt="admin tổng quan"></div>
+        <div class="cap"><b style="color:var(--purple)">Zone A · Vận hành</b> — Tổng quan: 9 user · 59 trạm · 5 provider · pipeline runs realtime</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.6em;min-height:0">
+        <div style="display:flex;flex-direction:column;gap:.25em;flex:1;min-height:0">
+          <div class="shot" style="flex:1;min-height:0"><img src="assets/admin_stations.png" alt="quản lý trạm"></div>
+          <div class="cap" style="margin:0">Quản lý trạm quan trắc (53 trạm master)</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.25em;flex:1;min-height:0">
+          <div class="shot" style="flex:1;min-height:0"><img src="assets/admin_analytics.png" alt="phân tích"></div>
+          <div class="cap" style="margin:0"><b style="color:var(--dash)">Zone B · Phân tích</b> — Forecast runs (MAE/RMSE/MAPE)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 17 · DEPLOYMENT -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">17</div>
+  <div class="shead"><div class="htext"><span class="kicker">Triển khai</span>
+    <h2>Triển khai <span class="ac">thực tế (CI/CD)</span></h2></div><div class="subr">Chương 5.2 · Docker · GitHub Actions</div></div>
+  <div class="body">
+    <div class="flow">
+      <div class="fstep" style="--c:var(--blue)"><div class="n"><span class="dotn">1</span> Build</div><h4>GitHub Actions</h4><p>Mỗi repo build Docker image (chỉ từ tag release v*)</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:var(--violet)"><div class="n"><span class="dotn">2</span> Registry</div><h4>GHCR</h4><p>Đẩy image lên GitHub Container Registry</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:#a23bd6"><div class="n"><span class="dotn">3</span> Deploy</div><h4>SSH → VPS</h4><p>docker compose pull &amp;&amp; up · guard theo github.actor</p></div>
+      <div class="farrow"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></div>
+      <div class="fstep" style="--c:var(--pink)"><div class="n"><span class="dotn">4</span> Serve</div><h4>Caddy + HTTPS</h4><p>Tự cấp/gia hạn Let's Encrypt cho 4 subdomain</p></div>
+    </div>
+    <div class="g2">
+      <div class="card edge"><h3><svg class="ic"><use href="#i-globe"/></svg> 4 tên miền production</h3>
+        <ul class="clean">
+          <li><span class="pill">airquality.info.vn</span> — Dashboard người dùng</li>
+          <li><span class="pill">admin.airquality.info.vn</span> — Quản trị</li>
+          <li><span class="pill">api.airquality.info.vn</span> — Service chính</li>
+          <li><span class="pill">be.airquality.info.vn</span> — Service phân tích</li>
+        </ul>
+      </div>
+      <div class="card"><h3><svg class="ic"><use href="#i-box"/></svg> Hạ tầng VPS</h3>
+        <ul class="clean">
+          <li>PostgreSQL 16 + 4 service container trong mạng <span class="pill">airquality_prod</span></li>
+          <li>DB <b>không expose</b> ra ngoài — migration chạy trong container API</li>
+          <li>Workflow riêng: <b>deploy-infra</b> &amp; <b>db-migrate</b></li>
+          <li>Local: mỗi repo có <span class="pill">docker-compose.yml</span> riêng</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 18 · EXPERIMENT -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">18</div>
+  <div class="shead"><div class="htext"><span class="kicker">Thực nghiệm</span>
+    <h2>Kết quả <span class="ac">đánh giá mô hình dự báo</span></h2></div><div class="subr">Chương 5.5 · Bảng 5.2 · ~6 ngày dữ liệu</div></div>
+  <div class="body">
+    <div class="g2">
+      <div class="card"><h3><svg class="ic"><use href="#i-chart"/></svg> So sánh 3 mô hình (target AQI)</h3>
+        <div class="tcard"><table><thead><tr><th>Mô hình</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>Thắng</th></tr></thead><tbody>
+          <tr><td><b>ARIMA(2,1,2)</b></td><td><b style="color:var(--good)">17.7</b></td><td><b style="color:var(--good)">22.9</b></td><td>20.8%</td><td><b>30</b>/51</td></tr>
+          <tr><td>Linear Regression</td><td>20.3</td><td>26.9</td><td>27.8%</td><td>21/51</td></tr>
+          <tr><td>Prophet</td><td style="color:var(--bad)">40.6</td><td style="color:var(--bad)">48.5</td><td style="color:var(--bad)">108%</td><td>0/51</td></tr>
+        </tbody></table></div>
+        <div class="note amber" style="margin-top:.1em"><svg class="ic"><use href="#i-snow"/></svg><div><b>Cold-start:</b> Prophet kém ở dữ liệu ngắn (cần ≥14–30 ngày hội tụ). Giai đoạn đầu <b>ưu tiên ARIMA/Linear</b>, giữ Prophet song song.</div></div>
+      </div>
+      <div class="card edge"><h3><svg class="ic"><use href="#i-search"/></svg> Phát hiện từ các phân tích khác</h3>
+        <ul class="clean">
+          <li><b>Anomaly (7 ngày):</b> ~200 bất thường (info 125, warning 74, critical 1); nhiều nhất PM2.5 &amp; PM10</li>
+          <li><b>Seasonal:</b> xác nhận 2 đỉnh giờ cao điểm ±20 điểm AQI tại Hà Nội/HCM/Đà Nẵng</li>
+          <li><b>Correlation:</b> NO₂–SO₂ ≈ 0.73 (mạnh nhất), PM2.5–NO₂ ≈ 0.60</li>
+          <li><b>Thu thập:</b> 56 trạm · IQAir ~4.800 req/tháng · OpenWeather ~336 req/ngày → <b>an toàn quota</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 19 · RESULTS -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">19</div>
+  <div class="shead"><div class="htext"><span class="kicker">Tổng kết</span>
+    <h2>Kết quả <span class="ac">đạt được</span></h2></div><div class="subr">Chương 6.1 · Kết luận</div></div>
+  <div class="body">
+    <div class="g2">
+      <div class="card edge"><h3><svg class="ic"><use href="#i-check"/></svg> Hoàn thành mục tiêu đề ra</h3>
+        <ul class="clean">
+          <li><b>Dashboard realtime</b> đã <b>triển khai thật</b> trên airquality.info.vn, 56 trạm, fusion 4 nguồn</li>
+          <li><b>Kiến trúc microservice</b> rõ ràng (NestJS + FastAPI) tách biệt bằng JWT RS256 + JWKS</li>
+          <li><b>3 mô hình dự báo</b> + đánh giá MAE/RMSE/MAPE; anomaly, seasonal, correlation, trend, health</li>
+          <li><b>Bản đồ tương tác</b> UX kiểu IQAir + biểu đồ diễn biến &amp; dự báo</li>
+        </ul>
+      </div>
+      <div class="card"><h3><svg class="ic"><use href="#i-star"/></svg> Giá trị kỹ thuật nổi bật</h3>
+        <ul class="clean">
+          <li><b>Cảnh báo cá nhân hóa</b> theo ngưỡng &amp; khu vực, gửi email + in-app</li>
+          <li><b>CSDL schema-per-domain</b> + data lineage truy ngược trọn vẹn</li>
+          <li><b>Bảo mật đa tầng</b>: RBAC 5 vai trò, schema ownership</li>
+          <li><b>Admin 2 zone lazy-load</b>, PWA offline + Web Push, CI/CD tự động</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note grad"><svg class="ic"><use href="#i-check"/></svg><div>Chứng minh tính khả thi của việc áp dụng <b>microservice + phân tích chuỗi thời gian hiện đại + UX chuyên nghiệp</b> vào bài toán giám sát môi trường thực tế tại Việt Nam.</div></div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 20 · LIMITATIONS -->
+<section class="slide">
+  <img class="wave bl" src="assets/wave2.svg" alt=""><div class="wm">20</div>
+  <div class="shead"><div class="htext"><span class="kicker pink">Tổng kết</span>
+    <h2>Những <span class="ac">hạn chế</span></h2></div><div class="subr">Chương 5.6.2</div></div>
+  <div class="body">
+    <div class="g2">
+      <div class="card"><h3><svg class="ic" style="stroke:#e08c1a"><use href="#i-alert"/></svg> Về dữ liệu &amp; mô hình</h3>
+        <ul class="clean">
+          <li><b>Horizon dự báo tối đa 24h</b> — chưa đủ dài cho quy hoạch (7–30 ngày)</li>
+          <li><b>Cold-start</b>: dữ liệu vận hành còn ngắn (~6 ngày) → forecast còn sơ bộ</li>
+          <li>Chưa <b>A/B testing tự động</b> chọn model tốt nhất theo từng trạm</li>
+          <li>Chưa tích hợp <b>dữ liệu giao thông</b> để phân tích tương quan</li>
+        </ul>
+      </div>
+      <div class="card"><h3><svg class="ic" style="stroke:#e08c1a"><use href="#i-alert"/></svg> Về hạ tầng &amp; mở rộng</h3>
+        <ul class="clean">
+          <li><b>Email qua Gmail SMTP</b> thủ công — chưa scale cho hàng chục nghìn user</li>
+          <li>Chưa tích hợp <b>cảm biến IoT cộng đồng</b> để tăng độ phủ</li>
+          <li>Notification theo <b>polling</b> — chưa event-driven (message queue)</li>
+          <li>Phân tích tương quan hiện chỉ dùng <b>hệ số Pearson</b></li>
+        </ul>
+      </div>
+    </div>
+    <div class="note"><svg class="ic"><use href="#i-compass"/></svg><div>Các hạn chế này là <b>cơ sở trực tiếp</b> định hình hướng phát triển ở slide tiếp theo.</div></div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 21 · FUTURE -->
+<section class="slide">
+  <img class="wave tr" src="assets/wave.svg" alt=""><div class="wm">21</div>
+  <div class="shead"><div class="htext"><span class="kicker">Tổng kết</span>
+    <h2>Hướng <span class="ac">phát triển</span></h2></div><div class="subr">Chương 6.2 · giải theo từng hạn chế</div></div>
+  <div class="body">
+    <div class="tcard">
+      <table><thead><tr><th style="width:38%">Hạn chế</th><th>→ Hướng phát triển</th></tr></thead><tbody>
+        <tr><td>Horizon ngắn, model cold-start</td><td><b>Deep learning</b> (LSTM, Temporal Fusion Transformer, NeuralForecast) cho horizon 7–30 ngày</td></tr>
+        <tr><td>Chưa tự chọn model theo trạm</td><td><b>A/B testing / champion–challenger tự động</b> theo từng trạm &amp; từng mùa</td></tr>
+        <tr><td>Thiếu dữ liệu giao thông</td><td>Tích hợp <b>TomTom / Google Maps Traffic</b> phân tích tương quan giao thông–ô nhiễm</td></tr>
+        <tr><td>Độ phủ trạm giới hạn</td><td>Mở rộng <b>cảm biến IoT cộng đồng</b> (PAM Air, sensor.community) + trạm địa phương</td></tr>
+        <tr><td>Email / notification chưa scale</td><td><b>Event-driven</b> (RabbitMQ/Kafka) + dịch vụ email chuyên (SendGrid)</td></tr>
+        <tr><td>Độ chính xác forecast</td><td>Đưa <b>dữ liệu thời tiết</b> thành feature cho forecast AQI · <b>API công khai</b> + đa ngôn ngữ</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note grad"><svg class="ic"><use href="#i-trend"/></svg><div>Lộ trình: nâng độ chính xác dự báo, mở rộng độ phủ &amp; quy mô người dùng, biến hệ thống thành nền tảng dữ liệu mở về chất lượng không khí Việt Nam.</div></div>
+  </div>
+  <div class="foot"><span class="who">Phạm Xuân Trường · 64132786</span><span class="dom">airquality.info.vn</span></div>
+</section>
+
+<!-- 22 · THANK YOU -->
+<section class="slide cover end">
+  <img class="wave tr" src="assets/wave.svg" alt=""><img class="wave bl" src="assets/wave2.svg" alt="">
+  <div class="wrap">
+    <img class="logo" src="assets/ntu_logo.png" alt="NTU" style="width:6.4em;height:6.4em">
+    <div class="badge">Cảm ơn quý Thầy Cô đã lắng nghe</div>
+    <h1 style="font-size:2.5em">Trân trọng cảm ơn &amp; kính mong<br>nhận được góp ý</h1>
+    <div class="domain" style="font-size:1.2em"><svg viewBox="0 0 24 24"><use href="#i-globe"/></svg> airquality.info.vn</div>
+    <div class="pillars">
+      <span style="color:#9ec1ff">① Thu thập</span><span style="color:#c4b5fd">② Lưu trữ</span><span style="color:#a9c0ff">③ Phân tích</span><span style="color:#ff9ecb">④ Dashboard</span>
+    </div>
+    <div class="meta" style="margin-top:.4em">
+      <div>SVTH: <b>Phạm Xuân Trường</b> · MSSV <b>64132786</b></div>
+      <div>GVHD: <b>ThS. Mai Cường Thọ</b></div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="pageno" id="pageno">1 / 22</div>
+
+<script>
+// ---- inject purple-academic decorations ----
+(function(){
+  const DECO='<div class="corner-tr"></div><div class="corner-bl"></div>'+
+    '<img class="hexdeco" src="assets/hexagons.png" alt="">'+
+    '<div class="logochip"><img src="assets/cap_icon.png" alt=""><span>Air Quality VN</span></div>';
+  document.querySelectorAll('.slide:not(.cover)').forEach(s=>s.insertAdjacentHTML('afterbegin',DECO));
+  // cover illustration + hexagons
+  document.querySelectorAll('.slide.cover').forEach(s=>{
+    s.insertAdjacentHTML('afterbegin','<img class="hex-cv" src="assets/hexagons.png" alt=""><img class="illus-cv" src="assets/illus_grad.png" alt="">');
+  });
+})();
+const slides=[...document.querySelectorAll('.slide')];
+let i=0;
+function show(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+  document.getElementById('progress').style.width=((i+1)/slides.length*100)+'%';
+  document.getElementById('pageno').textContent=(i+1)+' / '+slides.length;
+}
+function next(){show(i+1)} function prev(){show(i-1)}
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();next()}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev()}
+  else if(e.key==='Home')show(0);
+  else if(e.key==='End')show(slides.length-1);
+  else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen()}
+});
+document.addEventListener('click',e=>{if(e.target.closest('a'))return;const x=e.clientX,w=innerWidth;if(x>w*0.62)next();else if(x<w*0.38)prev()});
+let tx=0;addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50){dx<0?next():prev()}},{passive:true});
+const _q=new URLSearchParams(location.search).get('s');
+show(_q?parseInt(_q,10)-1:0);
+</script>
+</body>
+</html>
