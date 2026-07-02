@@ -8,7 +8,7 @@ services:
     expose:
       - "80"
     networks:
-      airquality_prod:
+      web:
         aliases: [fe]
     mem_limit: 128m
     logging:
@@ -16,5 +16,5 @@ services:
       options: { max-size: "10m", max-file: "5" }
 
 networks:
-  airquality_prod:
+  web:
     external: true
